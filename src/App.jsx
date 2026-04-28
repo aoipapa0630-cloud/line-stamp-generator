@@ -466,11 +466,13 @@ ${stampTitle ? `スタンプ名：${stampTitle}` : ""}`;
 export default function App() {
   const [images, setImages] = useState([]);
   const [analyzing, setAnalyzing] = useState(false);
+  const [removingBg, setRemovingBg] = useState(false);
+  const [removeBgProgress, setRemoveBgProgress] = useState(0);
   const [analysis, setAnalysis] = useState(null);
   const [stamps, setStamps] = useState([]);
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedFont, setSelectedFont] = useState(0);
-  const [bgStyle, setBgStyle] = useState("color");
+  const [bgStyle, setBgStyle] = useState("transparent");
   const [bubbleType, setBubbleType] = useState("tail");
   const [count, setCount] = useState(16);
   const [customTexts, setCustomTexts] = useState([]);
@@ -482,31 +484,51 @@ export default function App() {
   const [stampTitle, setStampTitle] = useState("");
   const fileRef = useRef();
 
-  const handleFiles = (e) => {
+  const removeBackground = async (file) => {
+    const apiKey = import.meta.env.VITE_REMOVE_BG_API_KEY;
+    if (!apiKey) return null;
+    try {
+      const formData = new FormData();
+      formData.append("image_file", file);
+      formData.append("size", "auto");
+      const resp = await fetch("https://api.remove.bg/v1.0/removebg", {
+        method: "POST",
+        headers: { "X-Api-Key": apiKey },
+        body: formData,
+      });
+      if (!resp.ok) return null;
+      const blob = await resp.blob();
+      return URL.createObjectURL(blob);
+    } catch {
+      return null;
+    }
+  };
+
+  const handleFiles = async (e) => {
     const files = Array.from(e.target.files||[]);
     if (!files.length) return;
     const target = Math.min(files.length, 5);
-    // loaded をクロージャ内に閉じ込めて複数回呼び出し時の混在を防ぐ
+    const apiKey = import.meta.env.VITE_REMOVE_BG_API_KEY;
+    setRemovingBg(!!apiKey);
+    setRemoveBgProgress(0);
     const loaded = [];
-    files.slice(0, target).forEach(file => {
-      const url = URL.createObjectURL(file);
+    for (let i = 0; i < target; i++) {
+      const file = files[i];
+      let url = URL.createObjectURL(file);
+      // 背景除去
+      if (apiKey) {
+        const removedUrl = await removeBackground(file);
+        if (removedUrl) url = removedUrl;
+        setRemoveBgProgress(Math.round(((i + 1) / target) * 100));
+      }
       const img = new Image();
-      img.onload = () => {
-        loaded.push({ url, el: img, name: file.name });
-        if (loaded.length === target) {
-          setImages(prev => [...prev, ...loaded].slice(0, 5));
-          setStep("config"); setAnalysis(null); setStamps([]);
-        }
-      };
-      img.onerror = () => {
-        loaded.push(null); // カウントを進めてハングを防ぐ
-        if (loaded.filter(Boolean).length === target || loaded.length === target) {
-          const valid = loaded.filter(Boolean);
-          if (valid.length) { setImages(prev => [...prev, ...valid].slice(0, 5)); setStep("config"); }
-        }
-      };
-      img.src = url;
-    });
+      await new Promise(res => { img.onload = res; img.onerror = res; img.src = url; });
+      loaded.push({ url, el: img, name: file.name, bgRemoved: !!apiKey });
+    }
+    setRemovingBg(false);
+    setRemoveBgProgress(0);
+    setImages(prev => [...prev, ...loaded].slice(0, 5));
+    setStep("config"); setAnalysis(null); setStamps([]);
     e.target.value = "";
   };
 
@@ -628,7 +650,7 @@ JSON形式のみで返してください（マークダウン不要）:
               <div key={i} style={{ position:"relative", width:80, height:80 }}>
                 <img src={img.url} style={{ width:80, height:80, objectFit:"cover", borderRadius:8, border:"0.5px solid var(--color-border-tertiary)", display:"block" }} />
                 <button onClick={() => { setImages(p=>p.filter((_,j)=>j!==i)); if(images.length<=1)setStep("upload"); }} style={{ position:"absolute", top:-7, right:-7, width:20, height:20, borderRadius:"50%", background:"var(--color-background-danger)", color:"var(--color-text-danger)", border:"none", cursor:"pointer", fontSize:13, fontWeight:700, lineHeight:"20px", textAlign:"center", padding:0 }}>×</button>
-                <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"rgba(0,0,0,0.45)", borderRadius:"0 0 8px 8px", fontSize:9, color:"#fff", textAlign:"center", padding:"2px 0" }}>画像{i+1}</div>
+                <div style={{ position:"absolute", bottom:0, left:0, right:0, background: img.bgRemoved ? "rgba(52,199,89,0.85)" : "rgba(0,0,0,0.45)", borderRadius:"0 0 8px 8px", fontSize:9, color:"#fff", textAlign:"center", padding:"2px 0" }}>{img.bgRemoved ? "✓ 背景除去済" : `画像${i+1}`}</div>
               </div>
             ))}
             {images.length<5 && (
@@ -637,11 +659,20 @@ JSON形式のみで返してください（マークダウン不要）:
               </div>
             )}
           </div>
+        ) : removingBg ? (
+          <div style={{ border:"1.5px solid var(--color-border-info)", borderRadius:12, padding:"2rem", textAlign:"center", marginBottom:10, background:"var(--color-background-info)" }}>
+            <div style={{ fontSize:24, marginBottom:8 }}>✂️</div>
+            <div style={{ fontSize:14, fontWeight:500, color:"var(--color-text-info)", marginBottom:12 }}>背景を自動除去しています... {removeBgProgress}%</div>
+            <div style={{ height:8, background:"var(--color-border-tertiary)", borderRadius:4, overflow:"hidden" }}>
+              <div style={{ height:"100%", width:`${removeBgProgress}%`, background:"var(--color-text-info)", borderRadius:4, transition:"width 0.3s" }} />
+            </div>
+          </div>
         ) : (
           <div onClick={() => fileRef.current.click()} style={{ border:"1.5px dashed var(--color-border-secondary)", borderRadius:12, padding:"2rem", textAlign:"center", cursor:"pointer", marginBottom:10 }}>
             <div style={{ fontSize:28, marginBottom:6 }}>🖼️</div>
             <div style={{ fontSize:14, color:"var(--color-text-secondary)" }}>クリックして画像を選択（最大5枚）</div>
             <div style={{ fontSize:12, color:"var(--color-text-tertiary)", marginTop:4 }}>表情・ポーズ違いの画像を複数枚いれると精度UP</div>
+            <div style={{ fontSize:11, color:"var(--color-text-info)", marginTop:6 }}>✨ アップロード後、背景を自動除去します</div>
           </div>
         )}
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={handleFiles} />
