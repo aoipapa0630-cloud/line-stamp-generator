@@ -331,8 +331,8 @@ function DrawingEditor({ stamp, onSave, onClose }) {
             onTouchStart={startDraw} onTouchMove={doDraw} onTouchEnd={endDraw}
           />
         </div>
-        <div style={{ fontSize:11, color:"var(--color-text-tertiary)", marginTop:4, textAlign:"center" }}>
-          {tool==="shape" ? "キャンバス上のお好みの場所をクリック（またはタップ）して配置" : "ドラッグして描画 • 手ブレ補正で滑らかに"}
+        <div style={{ fontSize:12, color:"var(--color-background-primary)", background:"rgba(0,0,0,0.55)", borderRadius:6, marginTop:6, padding:"6px 12px", textAlign:"center" }}>
+          {tool==="shape" ? "👆 キャンバス上のお好みの場所をクリックして配置" : "✏️ ドラッグして描画 • 手ブレ補正で滑らかに"}
         </div>
 
         <div style={{ marginTop:12, display:"flex", gap:8, justifyContent:"flex-end" }}>
