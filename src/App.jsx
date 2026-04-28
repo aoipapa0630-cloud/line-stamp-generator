@@ -256,86 +256,107 @@ function DrawingEditor({ stamp, onSave, onClose }) {
 
   const COLORS = ["#FF3366","#FF9500","#FFCC00","#34C759","#007AFF","#5856D6","#FF2D55","#000000","#FFFFFF"];
 
+  const BG = "#1a1a2e";
+  const SURFACE = "#16213e";
+  const ACCENT = "#e94560";
+  const TEXT = "#ffffff";
+  const TEXT2 = "#a8b2d8";
+  const BORDER = "rgba(255,255,255,0.15)";
+
   const S = {
-    overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.65)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:"1rem" },
-    modal: { background:"var(--color-background-primary)", borderRadius:16, padding:"1.25rem", width:"100%", maxWidth:540, maxHeight:"92vh", overflowY:"auto" },
-    canvasWrap: { position:"relative", width:"100%", maxWidth:STAMP_W, margin:"0 auto", background:"repeating-conic-gradient(#ddd 0% 25%, transparent 0% 50%) 0 0 / 16px 16px", borderRadius:8, overflow:"hidden", cursor: tool==="shape" ? "crosshair" : "cell" },
-    btnTool: (active) => ({ padding:"6px 14px", borderRadius:8, border:active?"2px solid var(--color-text-primary)":"0.5px solid var(--color-border-secondary)", background:active?"var(--color-background-secondary)":"transparent", cursor:"pointer", fontSize:13, fontWeight:active?500:400 }),
-    btnPrimary: { padding:"8px 20px", borderRadius:8, border:"none", background:"var(--color-text-primary)", color:"var(--color-background-primary)", cursor:"pointer", fontSize:13, fontWeight:500 },
-    btn: { padding:"8px 14px", borderRadius:8, border:"0.5px solid var(--color-border-secondary)", background:"transparent", cursor:"pointer", fontSize:13, color:"var(--color-text-primary)" },
+    overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.82)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:"1rem" },
+    modal: { background:BG, borderRadius:16, padding:"1.5rem", width:"100%", maxWidth:560, maxHeight:"92vh", overflowY:"auto", border:`1.5px solid ${BORDER}` },
+    canvasWrap: { position:"relative", width:"100%", maxWidth:STAMP_W, margin:"0 auto", background:"repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 0 0 / 16px 16px", borderRadius:10, overflow:"hidden", cursor: tool==="shape" ? "crosshair" : "cell", border:`1.5px solid ${BORDER}` },
+    btnTool: (active) => ({ padding:"10px 18px", borderRadius:8, border:`1.5px solid ${active ? ACCENT : BORDER}`, background: active ? ACCENT : "transparent", cursor:"pointer", fontSize:14, fontWeight:500, color: active ? TEXT : TEXT2 }),
+    btnPrimary: { padding:"12px 24px", borderRadius:8, border:"none", background:ACCENT, color:TEXT, cursor:"pointer", fontSize:14, fontWeight:500 },
+    btn: { padding:"12px 20px", borderRadius:8, border:`1.5px solid ${BORDER}`, background:"transparent", cursor:"pointer", fontSize:14, color:TEXT2 },
+    label: { fontSize:14, fontWeight:500, color:TEXT, display:"block", marginBottom:8 },
+    hint: { fontSize:13, color:TEXT2 },
   };
 
   return (
     <div style={S.overlay}>
       <div style={S.modal}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
+
+        {/* ヘッダー */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, paddingBottom:14, borderBottom:`1px solid ${BORDER}` }}>
           <div>
-            <div style={{ fontSize:15, fontWeight:500, color:"var(--color-text-primary)" }}>手描き編集 — {stamp.text}</div>
-            <div style={{ fontSize:11, color:"var(--color-text-secondary)", marginTop:2 }}>図形スタンプをクリックで置くだけ。マウスでもキレイに仕上がります。</div>
+            <div style={{ fontSize:17, fontWeight:500, color:TEXT }}>✏️ 手描き編集</div>
+            <div style={{ fontSize:13, color:TEXT2, marginTop:3 }}>スタンプ：{stamp.text}</div>
           </div>
-          <button style={{ ...S.btn, padding:"4px 10px", fontSize:12 }} onClick={undo} disabled={history.length < 2}>↩ 元に戻す</button>
+          <button style={{ ...S.btn, padding:"8px 14px", fontSize:13 }} onClick={undo} disabled={history.length < 2}>↩ 元に戻す</button>
         </div>
 
-        {/* Tool selector */}
-        <div style={{ display:"flex", gap:6, marginBottom:10, flexWrap:"wrap" }}>
-          <button style={S.btnTool(tool==="shape")}  onClick={() => setTool("shape")}>図形スタンプ（クリックで配置）</button>
-          <button style={S.btnTool(tool==="pen")}    onClick={() => { setTool("pen"); setSize(10); }}>フリーハンドペン</button>
-          <button style={S.btnTool(tool==="eraser")} onClick={() => { setTool("eraser"); setSize(20); }}>消しゴム</button>
+        {/* ツール選択 */}
+        <div style={{ marginBottom:14 }}>
+          <span style={S.label}>ツール選択</span>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+            <button style={S.btnTool(tool==="shape")}  onClick={() => setTool("shape")}>図形スタンプ</button>
+            <button style={S.btnTool(tool==="pen")}    onClick={() => { setTool("pen"); setSize(10); }}>フリーハンドペン</button>
+            <button style={S.btnTool(tool==="eraser")} onClick={() => { setTool("eraser"); setSize(20); }}>消しゴム</button>
+          </div>
         </div>
 
-        {/* Shape grid */}
+        {/* 図形選択 */}
         {tool === "shape" && (
-          <div style={{ marginBottom:10 }}>
-            <div style={{ fontSize:12, color:"var(--color-text-secondary)", marginBottom:6 }}>図形を選択してキャンバスをクリック → 好きな場所に配置</div>
-            <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:8 }}>
+          <div style={{ marginBottom:14, padding:"12px", background:SURFACE, borderRadius:10, border:`1px solid ${BORDER}` }}>
+            <span style={S.label}>① 図形を選ぶ</span>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:12 }}>
               {SHAPE_STAMPS.map(sh => (
-                <button key={sh.key} onClick={() => setSelectedShape(sh.key)} style={{ width:40, height:40, fontSize:22, borderRadius:8, border:selectedShape===sh.key?"2.5px solid var(--color-text-primary)":"0.5px solid var(--color-border-secondary)", background:selectedShape===sh.key?"var(--color-background-secondary)":"transparent", cursor:"pointer" }}>
+                <button key={sh.key} onClick={() => setSelectedShape(sh.key)} style={{ width:44, height:44, fontSize:24, borderRadius:8, border:`2px solid ${selectedShape===sh.key ? ACCENT : BORDER}`, background:selectedShape===sh.key ? "rgba(233,69,96,0.2)" : "transparent", cursor:"pointer", color:TEXT }}>
                   {sh.label}
                 </button>
               ))}
             </div>
-            <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-              <span style={{ fontSize:12, color:"var(--color-text-secondary)" }}>サイズ</span>
-              <input type="range" min={20} max={100} value={size} step={4} onChange={e=>setSize(Number(e.target.value))} style={{ width:100 }} />
-              <span style={{ fontSize:12 }}>{size}px</span>
+            <span style={S.label}>② サイズ</span>
+            <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+              <input type="range" min={20} max={100} value={size} step={4} onChange={e=>setSize(Number(e.target.value))} style={{ flex:1 }} />
+              <span style={{ fontSize:14, color:TEXT, minWidth:40 }}>{size}px</span>
             </div>
           </div>
         )}
 
-        {/* Pen size */}
+        {/* ペン設定 */}
         {tool === "pen" && (
-          <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:10 }}>
-            <span style={{ fontSize:12, color:"var(--color-text-secondary)" }}>太さ</span>
-            <input type="range" min={2} max={30} value={size} onChange={e=>setSize(Number(e.target.value))} style={{ width:100 }} />
-            <span style={{ fontSize:12 }}>{size}px</span>
-            <span style={{ fontSize:11, color:"var(--color-text-tertiary)" }}>手ブレ補正あり</span>
+          <div style={{ marginBottom:14, padding:"12px", background:SURFACE, borderRadius:10, border:`1px solid ${BORDER}` }}>
+            <span style={S.label}>太さ</span>
+            <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+              <input type="range" min={2} max={30} value={size} onChange={e=>setSize(Number(e.target.value))} style={{ flex:1 }} />
+              <span style={{ fontSize:14, color:TEXT, minWidth:40 }}>{size}px</span>
+              <span style={{ fontSize:12, color:TEXT2 }}>手ブレ補正あり</span>
+            </div>
           </div>
         )}
 
-        {/* Color picker */}
+        {/* カラーピッカー */}
         {(tool === "pen" || tool === "shape") && (
-          <div style={{ display:"flex", gap:5, marginBottom:10, flexWrap:"wrap", alignItems:"center" }}>
-            <span style={{ fontSize:12, color:"var(--color-text-secondary)" }}>色</span>
-            {COLORS.map(c => (
-              <button key={c} onClick={() => setColor(c)} style={{ width:26, height:26, borderRadius:"50%", background:c, border:color===c?"3px solid var(--color-text-primary)":"2px solid transparent", cursor:"pointer", outline:"none", boxShadow:"0 0 0 1px #ccc" }} />
-            ))}
-            <input type="color" value={color} onChange={e=>setColor(e.target.value)} style={{ width:26, height:26, padding:0, border:"none", borderRadius:"50%", cursor:"pointer" }} />
+          <div style={{ marginBottom:14, padding:"12px", background:SURFACE, borderRadius:10, border:`1px solid ${BORDER}` }}>
+            <span style={S.label}>{tool==="shape" ? "③ 色を選ぶ" : "色を選ぶ"}</span>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+              {COLORS.map(c => (
+                <button key={c} onClick={() => setColor(c)} style={{ width:32, height:32, borderRadius:"50%", background:c, border:color===c?`3px solid ${ACCENT}`:"2px solid rgba(255,255,255,0.3)", cursor:"pointer", outline:"none" }} />
+              ))}
+              <input type="color" value={color} onChange={e=>setColor(e.target.value)} style={{ width:32, height:32, padding:0, border:"none", borderRadius:"50%", cursor:"pointer" }} />
+            </div>
           </div>
         )}
 
-        {/* Canvas */}
-        <div style={S.canvasWrap}>
-          <canvas ref={canvasRef} style={{ display:"block", width:"100%", touchAction:"none" }} />
-          <canvas ref={overlayRef} style={{ position:"absolute", inset:0, width:"100%", opacity:0, touchAction:"none" }}
-            onMouseDown={startDraw} onMouseMove={doDraw} onMouseUp={endDraw} onMouseLeave={endDraw}
-            onTouchStart={startDraw} onTouchMove={doDraw} onTouchEnd={endDraw}
-          />
-        </div>
-        <div style={{ fontSize:12, color:"var(--color-background-primary)", background:"rgba(0,0,0,0.55)", borderRadius:6, marginTop:6, padding:"6px 12px", textAlign:"center" }}>
-          {tool==="shape" ? "👆 キャンバス上のお好みの場所をクリックして配置" : "✏️ ドラッグして描画 • 手ブレ補正で滑らかに"}
+        {/* キャンバス */}
+        <div style={{ marginBottom:8 }}>
+          <div style={{ fontSize:14, fontWeight:500, color:TEXT, marginBottom:8 }}>
+            {tool==="shape" ? "④ キャンバスをクリックして図形を配置" : "キャンバスをドラッグして描画"}
+          </div>
+          <div style={S.canvasWrap}>
+            <canvas ref={canvasRef} style={{ display:"block", width:"100%", touchAction:"none" }} />
+            <canvas ref={overlayRef} style={{ position:"absolute", inset:0, width:"100%", opacity:0, touchAction:"none" }}
+              onMouseDown={startDraw} onMouseMove={doDraw} onMouseUp={endDraw} onMouseLeave={endDraw}
+              onTouchStart={startDraw} onTouchMove={doDraw} onTouchEnd={endDraw}
+            />
+          </div>
         </div>
 
-        <div style={{ marginTop:12, display:"flex", gap:8, justifyContent:"flex-end" }}>
+        {/* フッター */}
+        <div style={{ display:"flex", gap:10, justifyContent:"flex-end", marginTop:16, paddingTop:14, borderTop:`1px solid ${BORDER}` }}>
           <button style={S.btn} onClick={onClose}>キャンセル</button>
           <button style={S.btnPrimary} onClick={() => { if (canvasRef.current) onSave(canvasRef.current.toDataURL("image/png")); }}>この編集を保存</button>
         </div>
