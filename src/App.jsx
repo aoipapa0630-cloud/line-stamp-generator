@@ -601,17 +601,20 @@ JSON形式のみで返してください（マークダウン不要）:
   };
 
   const editedCount = stamps.filter(s=>s.edited).length;
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 600;
 
   const S = {
-    app: { fontFamily:"var(--font-sans)", maxWidth:780, margin:"0 auto", padding:"1.5rem 1rem" },
-    card: { background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:12, padding:"1.25rem", marginBottom:"1rem" },
+    app: { fontFamily:"var(--font-sans)", maxWidth:780, margin:"0 auto", padding: isMobile ? "1rem 0.75rem" : "1.5rem 1rem" },
+    card: { background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:12, padding: isMobile ? "1rem" : "1.25rem", marginBottom:"1rem" },
     label: { fontSize:12, fontWeight:500, color:"var(--color-text-secondary)", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8, display:"block" },
-    btn: { padding:"8px 18px", borderRadius:8, border:"0.5px solid var(--color-border-secondary)", background:"transparent", cursor:"pointer", fontSize:13, color:"var(--color-text-primary)" },
-    btnPrimary: { padding:"10px 22px", borderRadius:8, border:"none", background:"var(--color-text-primary)", color:"var(--color-background-primary)", cursor:"pointer", fontSize:14, fontWeight:500 },
-    btnOutline: (active) => ({ padding:"6px 14px", borderRadius:8, border:active?"2px solid var(--color-text-primary)":"0.5px solid var(--color-border-secondary)", background:active?"var(--color-background-secondary)":"transparent", cursor:"pointer", fontSize:13, color:"var(--color-text-primary)", fontWeight:active?500:400 }),
-    colorDot: (i) => ({ width:26, height:26, borderRadius:"50%", background:COLOR_SETS[i].bg, border:selectedColor===i?"3px solid var(--color-text-primary)":"3px solid transparent", cursor:"pointer", outline:"none", flexShrink:0 }),
-    tag: { display:"inline-block", padding:"4px 10px", borderRadius:20, background:"var(--color-background-secondary)", border:"0.5px solid var(--color-border-tertiary)", fontSize:12, margin:"2px", cursor:"pointer" },
+    btn: { padding: isMobile ? "10px 14px" : "8px 18px", borderRadius:8, border:"0.5px solid var(--color-border-secondary)", background:"transparent", cursor:"pointer", fontSize: isMobile ? 14 : 13, color:"var(--color-text-primary)" },
+    btnPrimary: { padding: isMobile ? "12px 20px" : "10px 22px", borderRadius:8, border:"none", background:"var(--color-text-primary)", color:"var(--color-background-primary)", cursor:"pointer", fontSize: isMobile ? 15 : 14, fontWeight:500, width: isMobile ? "100%" : "auto" },
+    btnOutline: (active) => ({ padding: isMobile ? "10px 14px" : "6px 14px", borderRadius:8, border:active?"2px solid var(--color-text-primary)":"0.5px solid var(--color-border-secondary)", background:active?"var(--color-background-secondary)":"transparent", cursor:"pointer", fontSize: isMobile ? 14 : 13, color:"var(--color-text-primary)", fontWeight:active?500:400 }),
+    colorDot: (i) => ({ width: isMobile ? 32 : 26, height: isMobile ? 32 : 26, borderRadius:"50%", background:COLOR_SETS[i].bg, border:selectedColor===i?"3px solid var(--color-text-primary)":"3px solid transparent", cursor:"pointer", outline:"none", flexShrink:0 }),
+    tag: { display:"inline-block", padding: isMobile ? "6px 12px" : "4px 10px", borderRadius:20, background:"var(--color-background-secondary)", border:"0.5px solid var(--color-border-tertiary)", fontSize: isMobile ? 13 : 12, margin:"2px", cursor:"pointer" },
     stepNum: (done,active) => ({ width:24, height:24, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:500, flexShrink:0, background:active?"var(--color-text-primary)":done?"var(--color-background-success)":"var(--color-background-secondary)", color:active?"var(--color-background-primary)":done?"var(--color-text-success)":"var(--color-text-tertiary)" }),
+    row: { display:"flex", gap:12, flexWrap:"wrap" },
+    col: { flex:1, minWidth: isMobile ? "100%" : 150 },
   };
 
   return (
@@ -668,11 +671,46 @@ JSON形式のみで返してください（マークダウン不要）:
             </div>
           </div>
         ) : (
-          <div onClick={() => fileRef.current.click()} style={{ border:"1.5px dashed var(--color-border-secondary)", borderRadius:12, padding:"2rem", textAlign:"center", cursor:"pointer", marginBottom:10 }}>
-            <div style={{ fontSize:28, marginBottom:6 }}>🖼️</div>
-            <div style={{ fontSize:14, color:"var(--color-text-secondary)" }}>クリックして画像を選択（最大5枚）</div>
-            <div style={{ fontSize:12, color:"var(--color-text-tertiary)", marginTop:4 }}>表情・ポーズ違いの画像を複数枚いれると精度UP</div>
-            <div style={{ fontSize:11, color:"var(--color-text-info)", marginTop:6 }}>✨ アップロード後、背景を自動除去します</div>
+          <div style={{ marginBottom:10 }}>
+            {/* 撮影ガイド */}
+            <div style={{ background:"var(--color-background-secondary)", borderRadius:10, padding:"12px 14px", marginBottom:10, border:"0.5px solid var(--color-border-tertiary)" }}>
+              <div style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)", marginBottom:8 }}>📸 キレイに仕上げる撮影のコツ</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
+                  <span style={{ fontSize:16, flexShrink:0 }}>⬜</span>
+                  <div>
+                    <span style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>白い背景で撮影する</span>
+                    <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>白い壁・白い紙・白いシーツを背景にすると背景除去の精度が大幅にUPします</div>
+                  </div>
+                </div>
+                <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
+                  <span style={{ fontSize:16, flexShrink:0 }}>☀️</span>
+                  <div>
+                    <span style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>明るい場所で撮影する</span>
+                    <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>影が少ない昼間の自然光が最適です</div>
+                  </div>
+                </div>
+                <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
+                  <span style={{ fontSize:16, flexShrink:0 }}>🎯</span>
+                  <div>
+                    <span style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>被写体を中央に大きく写す</span>
+                    <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>ペットや人物は画面の60〜70%を占めるくらいが理想です</div>
+                  </div>
+                </div>
+                <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
+                  <span style={{ fontSize:16, flexShrink:0 }}>📷</span>
+                  <div>
+                    <span style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>複数の表情・ポーズで撮影する</span>
+                    <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>笑顔・驚き・困り顔など5枚撮ると豊かなスタンプセットになります</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div onClick={() => fileRef.current.click()} style={{ border:"1.5px dashed var(--color-border-secondary)", borderRadius:12, padding:"1.5rem", textAlign:"center", cursor:"pointer" }}>
+              <div style={{ fontSize:28, marginBottom:6 }}>🖼️</div>
+              <div style={{ fontSize:14, color:"var(--color-text-secondary)" }}>クリックして画像を選択（最大5枚）</div>
+              <div style={{ fontSize:11, color:"var(--color-text-info)", marginTop:6 }}>✨ アップロード後、背景を自動除去します</div>
+            </div>
           </div>
         )}
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display:"none" }} onChange={handleFiles} />
@@ -684,21 +722,21 @@ JSON形式のみで返してください（マークダウン不要）:
         <div style={S.card}>
           <span style={S.label}>スタンプ設定</span>
           <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:"1rem" }}>
-            <div style={{ flex:1, minWidth:150 }}>
+            <div style={{ flex:1, minWidth: isMobile ? "100%" : 150 }}>
               <div style={{ fontSize:13, color:"var(--color-text-secondary)", marginBottom:6 }}>枚数</div>
-              <select value={count} onChange={e=>setCount(Number(e.target.value))} style={{ width:"100%" }}>
+              <select value={count} onChange={e=>setCount(Number(e.target.value))} style={{ width:"100%", fontSize: isMobile ? 15 : 13, padding: isMobile ? "10px 8px" : "4px 8px" }}>
                 {[8,16,24,32,40].map(n=><option key={n} value={n}>{n}枚セット</option>)}
               </select>
             </div>
-            <div style={{ flex:1, minWidth:150 }}>
+            <div style={{ flex:1, minWidth: isMobile ? "100%" : 150 }}>
               <div style={{ fontSize:13, color:"var(--color-text-secondary)", marginBottom:6 }}>フォント</div>
-              <select value={selectedFont} onChange={e=>setSelectedFont(Number(e.target.value))} style={{ width:"100%" }}>
+              <select value={selectedFont} onChange={e=>setSelectedFont(Number(e.target.value))} style={{ width:"100%", fontSize: isMobile ? 15 : 13, padding: isMobile ? "10px 8px" : "4px 8px" }}>
                 {FONT_OPTIONS.map((f,i)=><option key={i} value={i}>{f.label}</option>)}
               </select>
             </div>
-            <div style={{ flex:1, minWidth:150 }}>
+            <div style={{ flex:1, minWidth: isMobile ? "100%" : 150 }}>
               <div style={{ fontSize:13, color:"var(--color-text-secondary)", marginBottom:6 }}>背景</div>
-              <select value={bgStyle} onChange={e=>setBgStyle(e.target.value)} style={{ width:"100%" }}>
+              <select value={bgStyle} onChange={e=>setBgStyle(e.target.value)} style={{ width:"100%", fontSize: isMobile ? 15 : 13, padding: isMobile ? "10px 8px" : "4px 8px" }}>
                 <option value="color">カラー</option>
                 <option value="gradient">グラデーション</option>
                 <option value="transparent">透過</option>
@@ -785,7 +823,7 @@ JSON形式のみで返してください（マークダウン不要）:
             </div>
           </div>
 
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(140px, 1fr))", gap:8 }}>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(140px, 1fr))", gap:8 }}>
             {stamps.map((s,i)=>(
               <div key={i} style={{ borderRadius:8, overflow:"hidden", border:s.edited?"2px solid var(--color-border-success)":"0.5px solid var(--color-border-tertiary)" }}>
                 <img src={s.dataUrl} style={{ width:"100%", display:"block" }} />
@@ -794,7 +832,7 @@ JSON形式のみで返してください（マークダウン不要）:
                     <span>{s.text}</span>
                     {s.edited && <span style={{ fontSize:10, color:"var(--color-text-success)" }}>✓編集済</span>}
                   </div>
-                  <button onClick={()=>setEditingStamp(i)} style={{ width:"100%", padding:"5px 0", borderRadius:6, border: s.edited ? "0.5px solid var(--color-border-success)" : "1.5px solid var(--color-border-danger)", background: s.edited ? "transparent" : "var(--color-background-danger)", cursor:"pointer", fontSize:11, color: s.edited ? "var(--color-text-success)" : "var(--color-text-danger)", fontWeight: s.edited ? 400 : 500 }}>
+                  <button onClick={()=>setEditingStamp(i)} style={{ width:"100%", padding: isMobile ? "8px 0" : "5px 0", borderRadius:6, border: s.edited ? "0.5px solid var(--color-border-success)" : "1.5px solid var(--color-border-danger)", background: s.edited ? "transparent" : "var(--color-background-danger)", cursor:"pointer", fontSize: isMobile ? 13 : 11, color: s.edited ? "var(--color-text-success)" : "var(--color-text-danger)", fontWeight: s.edited ? 400 : 500 }}>
                     {s.edited ? "✓ 編集済み" : "✏️ 手描き必須"}
                   </button>
                 </div>
