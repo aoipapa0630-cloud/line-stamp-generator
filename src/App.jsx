@@ -618,7 +618,7 @@ JSON形式のみで返してください（マークダウン不要）:
   };
 
   return (
-    <div style={S.app}>
+    <div style={{ ...S.app, background:"var(--color-background-secondary)", minHeight:"100vh" }}>
       {editingStamp !== null && (
         <DrawingEditor stamp={stamps[editingStamp]} onSave={(d) => handleSaveEdit(editingStamp,d)} onClose={() => setEditingStamp(null)} />
       )}
@@ -626,90 +626,91 @@ JSON形式のみで返してください（マークダウン不要）:
         <ChecklistModal stampCount={stamps.length} onConfirm={() => { setShowChecklist(false); doDownload(); }} onClose={() => setShowChecklist(false)} />
       )}
 
-      <h2 style={{ fontSize:22, fontWeight:500, margin:"0 0 4px", color:"var(--color-text-primary)" }}>LINE スタンプ自動生成</h2>
-      <p style={{ fontSize:13, color:"var(--color-text-secondary)", margin:"0 0 1.5rem" }}>最大5枚の画像をアップロード → スタンプセット生成 → 手描き加工 → 申請チェック → ZIP出力</p>
+      {/* Hero Header */}
+      <div style={{ background:"linear-gradient(135deg, #06C755 0%, #00A040 100%)", borderRadius:16, padding: isMobile ? "1.5rem 1.25rem" : "2rem 2.5rem", marginBottom:"1.5rem", color:"#fff", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", top:-20, right:-20, width:120, height:120, borderRadius:"50%", background:"rgba(255,255,255,0.08)" }} />
+        <div style={{ position:"absolute", bottom:-30, right:60, width:80, height:80, borderRadius:"50%", background:"rgba(255,255,255,0.06)" }} />
+        <div style={{ fontSize:11, fontWeight:600, letterSpacing:"0.1em", opacity:0.85, marginBottom:8, textTransform:"uppercase" }}>AI-Powered</div>
+        <h1 style={{ fontSize: isMobile ? 24 : 32, fontWeight:700, margin:"0 0 8px", letterSpacing:"-0.02em" }}>LINE スタンプ自動生成</h1>
+        <p style={{ fontSize: isMobile ? 13 : 15, opacity:0.9, margin:"0 0 1.25rem", lineHeight:1.6 }}>写真を撮るだけで、AIが背景除去・テキスト提案・スタンプ生成まで全自動。<br/>最短3分でオリジナルスタンプが完成します。</p>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+          {["✂️ AI背景自動除去", "✨ テキストAI提案", "📦 ZIP即ダウンロード", "📋 LINE申請ガイド付き"].map(f => (
+            <span key={f} style={{ fontSize:12, background:"rgba(255,255,255,0.2)", padding:"4px 10px", borderRadius:20, fontWeight:500 }}>{f}</span>
+          ))}
+        </div>
+      </div>
 
       {/* Step indicator */}
-      <div style={{ display:"flex", gap:8, marginBottom:"1.5rem", alignItems:"center" }}>
-        {["アップロード","カスタマイズ","プレビュー・加工"].map((s,i) => {
+      <div style={{ display:"flex", gap:4, marginBottom:"1.25rem", alignItems:"center", background:"var(--color-background-primary)", borderRadius:12, padding:"12px 16px", border:"0.5px solid var(--color-border-tertiary)" }}>
+        {["📸 アップロード", "⚙️ カスタマイズ", "🎨 プレビュー・加工"].map((s,i) => {
           const active=[step==="upload",step==="config",step==="preview"][i];
           const done=(i===0&&step!=="upload")||(i===1&&step==="preview");
           return (
-            <div key={s} style={{ display:"flex", alignItems:"center", gap:6 }}>
-              <div style={S.stepNum(done,active)}>{done?"✓":i+1}</div>
-              <span style={{ fontSize:12, color:active?"var(--color-text-primary)":"var(--color-text-secondary)", fontWeight:active?500:400 }}>{s}</span>
-              {i<2 && <span style={{ color:"var(--color-border-secondary)", fontSize:14, margin:"0 2px" }}>›</span>}
+            <div key={s} style={{ display:"flex", alignItems:"center", gap:6, flex:1 }}>
+              <div style={{ width:24, height:24, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, flexShrink:0, background: active ? "#06C755" : done ? "#E8F9EF" : "var(--color-background-secondary)", color: active ? "#fff" : done ? "#06C755" : "var(--color-text-tertiary)", border: done && !active ? "1.5px solid #06C755" : "none" }}>{done?"✓":i+1}</div>
+              <span style={{ fontSize: isMobile ? 11 : 12, color: active ? "#06C755" : done ? "#06C755" : "var(--color-text-tertiary)", fontWeight: active ? 600 : done ? 500 : 400, display: isMobile && i > 0 ? "none" : "block" }}>{s}</span>
+              {i<2 && <span style={{ color:"var(--color-border-secondary)", fontSize:14, marginLeft:"auto" }}>›</span>}
             </div>
           );
         })}
       </div>
 
-      {/* Upload */}
-      <div style={S.card}>
-        <span style={S.label}>サンプル画像（最大5枚）</span>
+      {/* Upload Card */}
+      <div style={{ ...S.card, border:"0.5px solid var(--color-border-tertiary)" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+          <div style={{ width:32, height:32, borderRadius:8, background:"#E8F9EF", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>📸</div>
+          <div>
+            <div style={{ fontSize:15, fontWeight:600, color:"var(--color-text-primary)" }}>サンプル画像をアップロード</div>
+            <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>最大5枚 • アップロード後に背景を自動除去します</div>
+          </div>
+        </div>
         {images.length>0 ? (
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:10 }}>
             {images.map((img,i) => (
               <div key={i} style={{ position:"relative", width:80, height:80 }}>
                 <img src={img.url} style={{ width:80, height:80, objectFit:"cover", borderRadius:8, border:"0.5px solid var(--color-border-tertiary)", display:"block" }} />
                 <button onClick={() => { setImages(p=>p.filter((_,j)=>j!==i)); if(images.length<=1)setStep("upload"); }} style={{ position:"absolute", top:-7, right:-7, width:20, height:20, borderRadius:"50%", background:"var(--color-background-danger)", color:"var(--color-text-danger)", border:"none", cursor:"pointer", fontSize:13, fontWeight:700, lineHeight:"20px", textAlign:"center", padding:0 }}>×</button>
-                <div style={{ position:"absolute", bottom:0, left:0, right:0, background: img.bgRemoved ? "rgba(52,199,89,0.85)" : "rgba(0,0,0,0.45)", borderRadius:"0 0 8px 8px", fontSize:9, color:"#fff", textAlign:"center", padding:"2px 0" }}>{img.bgRemoved ? "✓ 背景除去済" : `画像${i+1}`}</div>
+                <div style={{ position:"absolute", bottom:0, left:0, right:0, background: img.bgRemoved ? "rgba(6,199,85,0.85)" : "rgba(0,0,0,0.45)", borderRadius:"0 0 8px 8px", fontSize:9, color:"#fff", textAlign:"center", padding:"2px 0" }}>{img.bgRemoved ? "✓ 背景除去済" : `画像${i+1}`}</div>
               </div>
             ))}
             {images.length<5 && (
-              <div onClick={() => fileRef.current.click()} style={{ width:80, height:80, border:"1.5px dashed var(--color-border-secondary)", borderRadius:8, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"var(--color-text-tertiary)" }}>
+              <div onClick={() => fileRef.current.click()} style={{ width:80, height:80, border:"1.5px dashed #06C755", borderRadius:8, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:"pointer", color:"#06C755" }}>
                 <span style={{ fontSize:22 }}>+</span><span style={{ fontSize:10, marginTop:2 }}>追加</span>
               </div>
             )}
           </div>
         ) : removingBg ? (
-          <div style={{ border:"1.5px solid var(--color-border-info)", borderRadius:12, padding:"2rem", textAlign:"center", marginBottom:10, background:"var(--color-background-info)" }}>
+          <div style={{ border:"1.5px solid #06C755", borderRadius:12, padding:"2rem", textAlign:"center", marginBottom:10, background:"#E8F9EF" }}>
             <div style={{ fontSize:24, marginBottom:8 }}>✂️</div>
-            <div style={{ fontSize:14, fontWeight:500, color:"var(--color-text-info)", marginBottom:12 }}>背景を自動除去しています... {removeBgProgress}%</div>
-            <div style={{ height:8, background:"var(--color-border-tertiary)", borderRadius:4, overflow:"hidden" }}>
-              <div style={{ height:"100%", width:`${removeBgProgress}%`, background:"var(--color-text-info)", borderRadius:4, transition:"width 0.3s" }} />
+            <div style={{ fontSize:14, fontWeight:600, color:"#06C755", marginBottom:12 }}>背景を自動除去しています... {removeBgProgress}%</div>
+            <div style={{ height:8, background:"#C8F0D8", borderRadius:4, overflow:"hidden" }}>
+              <div style={{ height:"100%", width:`${removeBgProgress}%`, background:"#06C755", borderRadius:4, transition:"width 0.3s" }} />
             </div>
           </div>
         ) : (
           <div style={{ marginBottom:10 }}>
             {/* 撮影ガイド */}
-            <div style={{ background:"var(--color-background-secondary)", borderRadius:10, padding:"12px 14px", marginBottom:10, border:"0.5px solid var(--color-border-tertiary)" }}>
-              <div style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)", marginBottom:8 }}>📸 キレイに仕上げる撮影のコツ</div>
-              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-                <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
-                  <span style={{ fontSize:16, flexShrink:0 }}>⬜</span>
+            <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:8, marginBottom:12 }}>
+              {[
+                { icon:"⬜", title:"白い背景で撮影", desc:"白壁・白紙を背景にすると背景除去の精度が大幅UP" },
+                { icon:"☀️", title:"明るい場所で撮影", desc:"影が少ない昼間の自然光が最適" },
+                { icon:"🎯", title:"被写体を中央に大きく", desc:"画面の60〜70%を占めるくらいが理想" },
+                { icon:"📷", title:"複数の表情・ポーズで", desc:"笑顔・驚き・困り顔など5枚で豊かなセットに" },
+              ].map(g => (
+                <div key={g.title} style={{ display:"flex", gap:10, padding:"10px 12px", background:"var(--color-background-secondary)", borderRadius:10, border:"0.5px solid var(--color-border-tertiary)" }}>
+                  <span style={{ fontSize:20, flexShrink:0 }}>{g.icon}</span>
                   <div>
-                    <span style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>白い背景で撮影する</span>
-                    <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>白い壁・白い紙・白いシーツを背景にすると背景除去の精度が大幅にUPします</div>
+                    <div style={{ fontSize:13, fontWeight:600, color:"var(--color-text-primary)", marginBottom:2 }}>{g.title}</div>
+                    <div style={{ fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.4 }}>{g.desc}</div>
                   </div>
                 </div>
-                <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
-                  <span style={{ fontSize:16, flexShrink:0 }}>☀️</span>
-                  <div>
-                    <span style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>明るい場所で撮影する</span>
-                    <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>影が少ない昼間の自然光が最適です</div>
-                  </div>
-                </div>
-                <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
-                  <span style={{ fontSize:16, flexShrink:0 }}>🎯</span>
-                  <div>
-                    <span style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>被写体を中央に大きく写す</span>
-                    <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>ペットや人物は画面の60〜70%を占めるくらいが理想です</div>
-                  </div>
-                </div>
-                <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
-                  <span style={{ fontSize:16, flexShrink:0 }}>📷</span>
-                  <div>
-                    <span style={{ fontSize:13, fontWeight:500, color:"var(--color-text-primary)" }}>複数の表情・ポーズで撮影する</span>
-                    <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>笑顔・驚き・困り顔など5枚撮ると豊かなスタンプセットになります</div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
-            <div onClick={() => fileRef.current.click()} style={{ border:"1.5px dashed var(--color-border-secondary)", borderRadius:12, padding:"1.5rem", textAlign:"center", cursor:"pointer" }}>
-              <div style={{ fontSize:28, marginBottom:6 }}>🖼️</div>
-              <div style={{ fontSize:14, color:"var(--color-text-secondary)" }}>クリックして画像を選択（最大5枚）</div>
-              <div style={{ fontSize:11, color:"var(--color-text-info)", marginTop:6 }}>✨ アップロード後、背景を自動除去します</div>
+            <div onClick={() => fileRef.current.click()} style={{ border:"2px dashed #06C755", borderRadius:16, padding: isMobile ? "1.5rem" : "2.5rem", textAlign:"center", cursor:"pointer", background:"#F0FDF4", transition:"background 0.15s" }}>
+              <div style={{ fontSize:40, marginBottom:10 }}>🖼️</div>
+              <div style={{ fontSize: isMobile ? 15 : 17, fontWeight:600, color:"#06C755", marginBottom:4 }}>クリックして画像を選択</div>
+              <div style={{ fontSize:13, color:"#4CAF50" }}>最大5枚 • PNG / JPG / WEBP対応</div>
+              <div style={{ fontSize:12, color:"#4CAF50", marginTop:6 }}>✨ アップロード後、AIが自動で背景を除去します</div>
             </div>
           </div>
         )}
@@ -720,7 +721,13 @@ JSON形式のみで返してください（マークダウン不要）:
       {/* Config */}
       {step!=="upload" && (
         <div style={S.card}>
-          <span style={S.label}>スタンプ設定</span>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16, paddingBottom:14, borderBottom:"0.5px solid var(--color-border-tertiary)" }}>
+            <div style={{ width:32, height:32, borderRadius:8, background:"#E8F9EF", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>⚙️</div>
+            <div>
+              <div style={{ fontSize:15, fontWeight:600, color:"var(--color-text-primary)" }}>スタンプをカスタマイズ</div>
+              <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>フォント・カラー・フキダシを設定してAIでテキストを提案</div>
+            </div>
+          </div>
           <div style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:"1rem" }}>
             <div style={{ flex:1, minWidth: isMobile ? "100%" : 150 }}>
               <div style={{ fontSize:13, color:"var(--color-text-secondary)", marginBottom:6 }}>枚数</div>
@@ -762,8 +769,8 @@ JSON形式のみで返してください（マークダウン不要）:
           </div>
 
           <div style={{ marginBottom:"1rem" }}>
-            <button style={S.btnPrimary} onClick={analyzeImages} disabled={analyzing}>
-              {analyzing?"AI分析中...":`✨ ${images.length}枚をAI分析してテキスト提案`}
+            <button style={{ padding: isMobile?"12px 20px":"10px 22px", borderRadius:10, border:"none", background:"linear-gradient(135deg, #06C755, #00A040)", color:"#fff", cursor:"pointer", fontSize: isMobile?15:14, fontWeight:600, boxShadow:"0 2px 8px rgba(6,199,85,0.3)" }} onClick={analyzeImages} disabled={analyzing}>
+              {analyzing ? "🤖 AI分析中..." : `✨ ${images.length}枚をAI分析してテキスト提案`}
             </button>
           </div>
 
@@ -792,7 +799,9 @@ JSON形式のみで返してください（マークダウン不要）:
               {STAMP_TEXTS.slice(0,count).map((t,i)=><span key={i} style={{ ...S.tag, cursor:"default" }}>{t}</span>)}
             </div>
           )}
-          <button style={S.btnPrimary} onClick={generateStamps}>スタンプを{count}枚生成 →</button>
+          <button style={{ padding: isMobile?"14px 24px":"12px 28px", borderRadius:10, border:"none", background:"linear-gradient(135deg, #06C755, #00A040)", color:"#fff", cursor:"pointer", fontSize: isMobile?16:15, fontWeight:700, boxShadow:"0 2px 12px rgba(6,199,85,0.35)", width: isMobile?"100%":"auto" }} onClick={generateStamps}>
+            🎨 スタンプを{count}枚生成する →
+          </button>
         </div>
       )}
 
@@ -800,16 +809,18 @@ JSON形式のみで返してください（マークダウン不要）:
       {step==="preview" && stamps.length>0 && (
         <div style={S.card}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"0.75rem", flexWrap:"wrap", gap:8 }}>
-            <div>
-              <span style={S.label}>プレビュー・手描き加工</span>
-              <span style={{ fontSize:12, color:"var(--color-text-secondary)" }}>{stamps.length}枚 • 手描き編集済み: {editedCount}枚</span>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <div style={{ width:32, height:32, borderRadius:8, background:"#E8F9EF", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16 }}>🎨</div>
+              <div>
+                <div style={{ fontSize:15, fontWeight:600, color:"var(--color-text-primary)" }}>プレビュー・手描き加工</div>
+                <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>{stamps.length}枚生成 • 手描き編集済み: {editedCount}枚</div>
+              </div>
             </div>
             <button
-              style={{ ...S.btnPrimary, opacity: editedCount === stamps.length ? 1 : 0.35, cursor: editedCount === stamps.length ? "pointer" : "not-allowed" }}
+              style={{ padding: isMobile?"12px 20px":"10px 22px", borderRadius:10, border:"none", background: editedCount === stamps.length ? "linear-gradient(135deg, #06C755, #00A040)" : "var(--color-border-tertiary)", color:"#fff", cursor: editedCount === stamps.length ? "pointer" : "not-allowed", fontSize: isMobile?15:14, fontWeight:600, boxShadow: editedCount === stamps.length ? "0 2px 8px rgba(6,199,85,0.3)" : "none", width: isMobile?"100%":"auto" }}
               onClick={() => editedCount === stamps.length && setShowChecklist(true)}
-              title={editedCount < stamps.length ? `手描き未完了 ${stamps.length - editedCount}枚` : ""}
             >
-              {editedCount === stamps.length ? "申請前チェック → ZIP ↓" : `手描き未完了 ${stamps.length - editedCount}枚`}
+              {editedCount === stamps.length ? "📦 申請前チェック → ZIP ↓" : `✏️ 手描き未完了 ${stamps.length - editedCount}枚`}
             </button>
           </div>
 
