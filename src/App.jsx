@@ -482,7 +482,7 @@ export default function App() {
   const [editingStamp, setEditingStamp] = useState(null);
   const [showChecklist, setShowChecklist] = useState(false);
   const [stampTitle, setStampTitle] = useState("");
-  const [showTerms, setShowTerms] = useState(null);
+  const [showTerms, setShowTerms] = useState(null); // "terms" | "privacy" | "tokushoho"
   const [isPaid, setIsPaid] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const fileRef = useRef();
@@ -1008,7 +1008,8 @@ JSON形式のみで返してください（マークダウン不要）:
         <div style={{ display:"flex", gap:16, justifyContent:"center", flexWrap:"wrap" }}>
           <button onClick={() => setShowTerms("terms")} style={{ fontSize:12, color:"var(--color-text-secondary)", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" }}>利用規約</button>
           <button onClick={() => setShowTerms("privacy")} style={{ fontSize:12, color:"var(--color-text-secondary)", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" }}>プライバシーポリシー</button>
-          <a href="mailto:support@example.com" style={{ fontSize:12, color:"var(--color-text-secondary)", textDecoration:"underline" }}>お問い合わせ</a>
+          <button onClick={() => setShowTerms("tokushoho")} style={{ fontSize:12, color:"var(--color-text-secondary)", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" }}>特定商取引法に基づく表記</button>
+          <a href="mailto:omakasesound@gmail.com" style={{ fontSize:12, color:"var(--color-text-secondary)", textDecoration:"underline" }}>お問い合わせ</a>
         </div>
       </div>
 
@@ -1018,11 +1019,38 @@ JSON形式のみで返してください（マークダウン不要）:
           <div style={{ background:"var(--color-background-primary)", borderRadius:16, padding:"1.5rem", width:"100%", maxWidth:600, maxHeight:"85vh", overflowY:"auto" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.25rem" }}>
               <h2 style={{ fontSize:18, fontWeight:600, margin:0, color:"var(--color-text-primary)" }}>
-                {showTerms === "terms" ? "利用規約" : "プライバシーポリシー"}
+                {showTerms === "terms" ? "利用規約" : showTerms === "privacy" ? "プライバシーポリシー" : "特定商取引法に基づく表記"}
               </h2>
               <button onClick={() => setShowTerms(null)} style={{ background:"none", border:"none", fontSize:20, cursor:"pointer", color:"var(--color-text-secondary)" }}>×</button>
             </div>
-            {showTerms === "terms" ? (
+            {showTerms === "tokushoho" ? (
+              <div style={{ fontSize:13, color:"var(--color-text-secondary)", lineHeight:1.9 }}>
+                <table style={{ width:"100%", borderCollapse:"collapse" }}>
+                  {[
+                    ["販売業者", "橋本明佳"],
+                    ["運営責任者", "橋本明佳"],
+                    ["所在地", "請求があり次第、遅滞なく開示いたします"],
+                    ["電話番号", "請求があり次第、遅滞なく開示いたします"],
+                    ["メールアドレス", "omakasesound@gmail.com"],
+                    ["サービス名", "LINE スタンプ自動生成"],
+                    ["販売価格", "月額980円（税込）"],
+                    ["支払方法", "クレジットカード決済（Stripe）"],
+                    ["支払時期", "お申し込み時にご請求。以降毎月自動更新"],
+                    ["サービス提供時期", "決済完了後、即時ご利用いただけます"],
+                    ["返品・キャンセル", "サービスの性質上、決済完了後の返金はお受けできません。ただし次回更新日の前日までに解約手続きをされた場合、翌月以降の請求は発生しません"],
+                    ["動作環境", "最新版のChrome・Safari・Edge等のブラウザ。インターネット接続環境が必要です"],
+                  ].map(([k, v]) => (
+                    <tr key={k} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)" }}>
+                      <td style={{ padding:"10px 8px", fontWeight:600, color:"var(--color-text-primary)", whiteSpace:"nowrap", verticalAlign:"top", width:"35%" }}>{k}</td>
+                      <td style={{ padding:"10px 8px", color:"var(--color-text-secondary)" }}>{v}</td>
+                    </tr>
+                  ))}
+                </table>
+                <p style={{ fontSize:11, color:"var(--color-text-tertiary)", marginTop:12 }}>
+                  ※ 所在地・電話番号の開示請求はメールにてお問い合わせください。遅滞なく開示いたします。
+                </p>
+              </div>
+            ) : showTerms === "terms" ? (
               <div style={{ fontSize:13, color:"var(--color-text-secondary)", lineHeight:1.8 }}>
                 <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>第1条（適用）</p>
                 <p>本規約は、本サービス「LINE スタンプ自動生成」（以下「本サービス」）の利用条件を定めるものです。ユーザーの皆さまには、本規約に従って本サービスをご利用いただきます。</p>
