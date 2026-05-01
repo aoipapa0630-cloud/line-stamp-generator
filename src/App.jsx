@@ -482,7 +482,31 @@ export default function App() {
   const [editingStamp, setEditingStamp] = useState(null);
   const [showChecklist, setShowChecklist] = useState(false);
   const [stampTitle, setStampTitle] = useState("");
+  const [showTerms, setShowTerms] = useState(null);
+  const [isPaid, setIsPaid] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
   const fileRef = useRef();
+
+  // 決済成功・キャンセルの検知
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "true") {
+      setIsPaid(true);
+      window.history.replaceState({}, "", "/");
+    }
+  }, []);
+
+  const handleCheckout = async () => {
+    setCheckingOut(true);
+    try {
+      const resp = await fetch("/api/create-checkout-session", { method: "POST" });
+      const data = await resp.json();
+      if (data.url) window.location.href = data.url;
+    } catch (err) {
+      alert("決済ページへの移動に失敗しました。しばらく待ってから再試行してください。");
+    }
+    setCheckingOut(false);
+  };
 
   const removeBackground = async (file) => {
     const apiKey = import.meta.env.VITE_REMOVE_BG_API_KEY;
@@ -640,7 +664,28 @@ JSON形式のみで返してください（マークダウン不要）:
         </div>
       </div>
 
-      {/* Step indicator */}
+      {/* Pricing Banner */}
+      {!isPaid && (
+        <div style={{ background:"var(--color-background-primary)", border:"1.5px solid #06C755", borderRadius:12, padding:"1rem 1.25rem", marginBottom:"1.25rem", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
+          <div>
+            <div style={{ fontSize:15, fontWeight:600, color:"var(--color-text-primary)", marginBottom:2 }}>🎉 月額980円で使い放題</div>
+            <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>AI背景除去・テキスト提案・スタンプ生成が何度でも利用可能。いつでも解約できます。</div>
+          </div>
+          <button
+            onClick={handleCheckout}
+            disabled={checkingOut}
+            style={{ padding:"10px 24px", borderRadius:10, border:"none", background:"linear-gradient(135deg, #06C755, #00A040)", color:"#fff", cursor:"pointer", fontSize:14, fontWeight:600, boxShadow:"0 2px 8px rgba(6,199,85,0.3)", flexShrink:0, whiteSpace:"nowrap" }}
+          >
+            {checkingOut ? "処理中..." : "月額980円で始める →"}
+          </button>
+        </div>
+      )}
+      {isPaid && (
+        <div style={{ background:"#E8F9EF", border:"1.5px solid #06C755", borderRadius:12, padding:"0.75rem 1.25rem", marginBottom:"1.25rem", display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:20 }}>✅</span>
+          <div style={{ fontSize:14, fontWeight:600, color:"#00A040" }}>サブスクリプション有効 — フル機能をご利用いただけます</div>
+        </div>
+      )}
       <div style={{ display:"flex", gap:4, marginBottom:"1.25rem", alignItems:"center", background:"var(--color-background-primary)", borderRadius:12, padding:"12px 16px", border:"0.5px solid var(--color-border-tertiary)" }}>
         {["📸 アップロード", "⚙️ カスタマイズ", "🎨 プレビュー・加工"].map((s,i) => {
           const active=[step==="upload",step==="config",step==="preview"][i];
@@ -896,6 +941,62 @@ JSON形式のみで返してください（マークダウン不要）:
 
           {/* アナウンス文 */}
           {announcement && <AnnouncementPanel stampTitle={stampTitle} />}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{ marginTop:"2rem", paddingTop:"1.5rem", borderTop:"0.5px solid var(--color-border-tertiary)", textAlign:"center" }}>
+        <div style={{ fontSize:12, color:"var(--color-text-tertiary)", marginBottom:8 }}>
+          © 2025 LINE スタンプ自動生成 • Powered by Claude AI & remove.bg
+        </div>
+        <div style={{ display:"flex", gap:16, justifyContent:"center", flexWrap:"wrap" }}>
+          <button onClick={() => setShowTerms("terms")} style={{ fontSize:12, color:"var(--color-text-secondary)", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" }}>利用規約</button>
+          <button onClick={() => setShowTerms("privacy")} style={{ fontSize:12, color:"var(--color-text-secondary)", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" }}>プライバシーポリシー</button>
+          <a href="mailto:support@example.com" style={{ fontSize:12, color:"var(--color-text-secondary)", textDecoration:"underline" }}>お問い合わせ</a>
+        </div>
+      </div>
+
+      {/* Terms/Privacy Modal */}
+      {showTerms && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:"1rem" }}>
+          <div style={{ background:"var(--color-background-primary)", borderRadius:16, padding:"1.5rem", width:"100%", maxWidth:600, maxHeight:"85vh", overflowY:"auto" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.25rem" }}>
+              <h2 style={{ fontSize:18, fontWeight:600, margin:0, color:"var(--color-text-primary)" }}>
+                {showTerms === "terms" ? "利用規約" : "プライバシーポリシー"}
+              </h2>
+              <button onClick={() => setShowTerms(null)} style={{ background:"none", border:"none", fontSize:20, cursor:"pointer", color:"var(--color-text-secondary)" }}>×</button>
+            </div>
+            {showTerms === "terms" ? (
+              <div style={{ fontSize:13, color:"var(--color-text-secondary)", lineHeight:1.8 }}>
+                <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>第1条（適用）</p>
+                <p>本規約は、本サービス「LINE スタンプ自動生成」（以下「本サービス」）の利用条件を定めるものです。ユーザーの皆さまには、本規約に従って本サービスをご利用いただきます。</p>
+                <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>第2条（利用条件）</p>
+                <p>・本サービスはLINEスタンプの作成支援を目的とするものです。<br/>・アップロードする画像は、ご自身が権利を有するものに限ります。<br/>・第三者の著作権・肖像権を侵害する画像のアップロードは禁止します。</p>
+                <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>第3条（禁止事項）</p>
+                <p>・公序良俗に反するコンテンツの作成<br/>・他者の権利を侵害する行為<br/>・本サービスの逆コンパイル・リバースエンジニアリング<br/>・商業目的での無断転載・再配布</p>
+                <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>第4条（免責事項）</p>
+                <p>本サービスはLINE株式会社とは無関係の独立したサービスです。生成されたスタンプのLINE審査結果については保証できません。サービスの利用によって生じた損害について、運営者は責任を負いません。</p>
+                <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>第5条（規約の変更）</p>
+                <p>運営者は必要に応じて本規約を変更できるものとします。変更後の規約はサービス上に掲示した時点で効力を生じます。</p>
+                <p style={{ fontSize:11, color:"var(--color-text-tertiary)" }}>制定日：2025年1月1日</p>
+              </div>
+            ) : (
+              <div style={{ fontSize:13, color:"var(--color-text-secondary)", lineHeight:1.8 }}>
+                <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>1. 収集する情報</p>
+                <p>本サービスでは以下の情報を取り扱います。<br/>・アップロードされた画像（背景除去処理後に削除）<br/>・サービス利用状況のログ情報</p>
+                <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>2. 情報の利用目的</p>
+                <p>・スタンプ生成サービスの提供<br/>・サービスの改善・品質向上<br/>・障害対応・セキュリティ対策</p>
+                <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>3. 第三者への提供</p>
+                <p>以下のサービスに画像データを送信します。<br/>・remove.bg（背景除去処理）<br/>・Anthropic Claude API（テキスト提案）<br/>各サービスのプライバシーポリシーに従い処理されます。</p>
+                <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>4. 画像データの保持</p>
+                <p>アップロードされた画像はスタンプ生成処理にのみ使用し、処理完了後にサーバー上には保持しません。</p>
+                <p style={{ fontWeight:600, color:"var(--color-text-primary)" }}>5. お問い合わせ</p>
+                <p>プライバシーに関するお問い合わせは、サービス内のお問い合わせフォームよりご連絡ください。</p>
+                <p style={{ fontSize:11, color:"var(--color-text-tertiary)" }}>制定日：2025年1月1日</p>
+              </div>
+            )}
+            <button onClick={() => setShowTerms(null)} style={{ marginTop:"1rem", width:"100%", padding:"12px", borderRadius:8, border:"none", background:"#06C755", color:"#fff", cursor:"pointer", fontSize:14, fontWeight:600 }}>閉じる</button>
+          </div>
         </div>
       )}
     </div>
