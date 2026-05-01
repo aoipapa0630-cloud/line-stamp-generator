@@ -651,35 +651,91 @@ JSON形式のみで返してください（マークダウン不要）:
       )}
 
       {/* Hero Header */}
-      <div style={{ background:"linear-gradient(135deg, #06C755 0%, #00A040 100%)", borderRadius:16, padding: isMobile ? "1.5rem 1.25rem" : "2rem 2.5rem", marginBottom:"1.5rem", color:"#fff", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", top:-20, right:-20, width:120, height:120, borderRadius:"50%", background:"rgba(255,255,255,0.08)" }} />
-        <div style={{ position:"absolute", bottom:-30, right:60, width:80, height:80, borderRadius:"50%", background:"rgba(255,255,255,0.06)" }} />
-        <div style={{ fontSize:11, fontWeight:600, letterSpacing:"0.1em", opacity:0.85, marginBottom:8, textTransform:"uppercase" }}>AI-Powered</div>
-        <h1 style={{ fontSize: isMobile ? 24 : 32, fontWeight:700, margin:"0 0 8px", letterSpacing:"-0.02em" }}>LINE スタンプ自動生成</h1>
-        <p style={{ fontSize: isMobile ? 13 : 15, opacity:0.9, margin:"0 0 1.25rem", lineHeight:1.6 }}>写真を撮るだけで、AIが背景除去・テキスト提案・スタンプ生成まで全自動。<br/>最短3分でオリジナルスタンプが完成します。</p>
-        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+      <div style={{ background:"linear-gradient(135deg, #06C755 0%, #00A040 100%)", borderRadius:16, padding: isMobile ? "2rem 1.25rem" : "3rem 2.5rem", marginBottom:"1.5rem", color:"#fff", position:"relative", overflow:"hidden", textAlign:"center" }}>
+        <div style={{ position:"absolute", top:-20, right:-20, width:150, height:150, borderRadius:"50%", background:"rgba(255,255,255,0.08)" }} />
+        <div style={{ position:"absolute", bottom:-30, left:40, width:100, height:100, borderRadius:"50%", background:"rgba(255,255,255,0.06)" }} />
+        <div style={{ fontSize:11, fontWeight:600, letterSpacing:"0.15em", opacity:0.85, marginBottom:12, textTransform:"uppercase" }}>🤖 AI-Powered LINE Stamp Generator</div>
+        <h1 style={{ fontSize: isMobile ? 26 : 38, fontWeight:800, margin:"0 0 12px", letterSpacing:"-0.02em", lineHeight:1.2 }}>写真1枚から<br/>オリジナルLINEスタンプを<br/>最短3分で作成</h1>
+        <p style={{ fontSize: isMobile ? 14 : 16, opacity:0.9, margin:"0 0 1.5rem", lineHeight:1.7, maxWidth:500, marginLeft:"auto", marginRight:"auto" }}>AIが背景除去・テキスト提案・スタンプ生成まで全自動。難しい操作は一切不要です。</p>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center", marginBottom:"1.5rem" }}>
           {["✂️ AI背景自動除去", "✨ テキストAI提案", "📦 ZIP即ダウンロード", "📋 LINE申請ガイド付き"].map(f => (
-            <span key={f} style={{ fontSize:12, background:"rgba(255,255,255,0.2)", padding:"4px 10px", borderRadius:20, fontWeight:500 }}>{f}</span>
+            <span key={f} style={{ fontSize:12, background:"rgba(255,255,255,0.2)", padding:"6px 12px", borderRadius:20, fontWeight:500 }}>{f}</span>
+          ))}
+        </div>
+        <button onClick={handleCheckout} disabled={checkingOut} style={{ padding:"14px 36px", borderRadius:12, border:"2px solid rgba(255,255,255,0.6)", background:"rgba(255,255,255,0.15)", color:"#fff", cursor:"pointer", fontSize: isMobile?15:17, fontWeight:700, backdropFilter:"blur(4px)" }}>
+          {checkingOut ? "処理中..." : "🚀 今すぐ無料で試す → 月額980円"}
+        </button>
+        <div style={{ fontSize:12, opacity:0.7, marginTop:8 }}>クレジットカード登録後いつでも解約可能</div>
+      </div>
+
+      {/* Features Section */}
+      <div style={{ ...S.card, marginBottom:"1rem" }}>
+        <div style={{ textAlign:"center", marginBottom:"1.25rem" }}>
+          <div style={{ fontSize: isMobile?18:22, fontWeight:700, color:"var(--color-text-primary)", marginBottom:6 }}>選ばれる3つの理由</div>
+          <div style={{ fontSize:13, color:"var(--color-text-secondary)" }}>競合サービスと比べてみてください</div>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":"repeat(3,1fr)", gap:12 }}>
+          {[
+            { icon:"⚡", title:"最短3分で完成", desc:"写真を選ぶだけ。AIが背景除去からスタンプ生成まで全自動で行います。難しい操作は不要です。", color:"#FFF3CD" },
+            { icon:"💰", title:"業界最安値 月額980円", desc:"競合他社は1セット3,000円〜。月額980円なら何セットでも作り放題。コスト99%削減。", color:"#D4EDDA" },
+            { icon:"📱", title:"PC・スマホ両対応", desc:"ブラウザだけで完結。アプリのインストール不要。スマホからでも簡単に操作できます。", color:"#D1ECF1" },
+          ].map(f => (
+            <div key={f.title} style={{ padding:"1.25rem", borderRadius:12, background:f.color, border:"0.5px solid rgba(0,0,0,0.06)" }}>
+              <div style={{ fontSize:32, marginBottom:10 }}>{f.icon}</div>
+              <div style={{ fontSize:15, fontWeight:700, color:"var(--color-text-primary)", marginBottom:6 }}>{f.title}</div>
+              <div style={{ fontSize:13, color:"var(--color-text-secondary)", lineHeight:1.6 }}>{f.desc}</div>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Pricing Banner */}
-      {!isPaid && (
-        <div style={{ background:"var(--color-background-primary)", border:"1.5px solid #06C755", borderRadius:12, padding:"1rem 1.25rem", marginBottom:"1.25rem", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
-          <div>
-            <div style={{ fontSize:15, fontWeight:600, color:"var(--color-text-primary)", marginBottom:2 }}>🎉 月額980円で使い放題</div>
-            <div style={{ fontSize:12, color:"var(--color-text-secondary)" }}>AI背景除去・テキスト提案・スタンプ生成が何度でも利用可能。いつでも解約できます。</div>
-          </div>
-          <button
-            onClick={handleCheckout}
-            disabled={checkingOut}
-            style={{ padding:"10px 24px", borderRadius:10, border:"none", background:"linear-gradient(135deg, #06C755, #00A040)", color:"#fff", cursor:"pointer", fontSize:14, fontWeight:600, boxShadow:"0 2px 8px rgba(6,199,85,0.3)", flexShrink:0, whiteSpace:"nowrap" }}
-          >
-            {checkingOut ? "処理中..." : "月額980円で始める →"}
-          </button>
+      {/* How it works */}
+      <div style={{ ...S.card, marginBottom:"1rem" }}>
+        <div style={{ textAlign:"center", marginBottom:"1.25rem" }}>
+          <div style={{ fontSize: isMobile?18:22, fontWeight:700, color:"var(--color-text-primary)", marginBottom:6 }}>使い方はたった3ステップ</div>
         </div>
-      )}
+        <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":"repeat(3,1fr)", gap:12 }}>
+          {[
+            { step:"01", icon:"📸", title:"写真をアップロード", desc:"ペット・子供・自分の写真を選択。白背景で撮影するとより綺麗に仕上がります。" },
+            { step:"02", icon:"🤖", title:"AIが自動生成", desc:"背景除去・テキスト提案・スタンプ生成を全自動で処理。待ち時間は約30秒。" },
+            { step:"03", icon:"📦", title:"ZIPでダウンロード", desc:"完成したスタンプをZIPで一括ダウンロード。LINEに申請して即使用可能。" },
+          ].map(f => (
+            <div key={f.step} style={{ padding:"1.25rem", borderRadius:12, background:"var(--color-background-secondary)", border:"0.5px solid var(--color-border-tertiary)", textAlign:"center" }}>
+              <div style={{ fontSize:11, fontWeight:700, color:"#06C755", letterSpacing:"0.1em", marginBottom:8 }}>STEP {f.step}</div>
+              <div style={{ fontSize:36, marginBottom:10 }}>{f.icon}</div>
+              <div style={{ fontSize:15, fontWeight:700, color:"var(--color-text-primary)", marginBottom:6 }}>{f.title}</div>
+              <div style={{ fontSize:13, color:"var(--color-text-secondary)", lineHeight:1.6 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pricing Section */}
+      <div style={{ ...S.card, marginBottom:"1.5rem", textAlign:"center" }}>
+        <div style={{ fontSize: isMobile?18:22, fontWeight:700, color:"var(--color-text-primary)", marginBottom:6 }}>シンプルな料金プラン</div>
+        <div style={{ fontSize:13, color:"var(--color-text-secondary)", marginBottom:"1.5rem" }}>面倒な従量課金なし。月額固定で使い放題。</div>
+        <div style={{ maxWidth:360, margin:"0 auto", background:"linear-gradient(135deg, #F0FDF4, #DCFCE7)", border:"2px solid #06C755", borderRadius:16, padding:"2rem" }}>
+          <div style={{ fontSize:13, fontWeight:600, color:"#06C755", letterSpacing:"0.1em", marginBottom:8 }}>スタンダードプラン</div>
+          <div style={{ fontSize:48, fontWeight:800, color:"var(--color-text-primary)", lineHeight:1 }}>¥980</div>
+          <div style={{ fontSize:14, color:"var(--color-text-secondary)", marginBottom:"1.5rem" }}>/月（税込）</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:"1.5rem", textAlign:"left" }}>
+            {["✅ スタンプ生成 無制限","✅ AI背景自動除去","✅ AIテキスト提案","✅ ZIP一括ダウンロード","✅ LINE申請ガイド付き","✅ PC・スマホ対応","✅ いつでも解約可能"].map(f => (
+              <div key={f} style={{ fontSize:14, color:"var(--color-text-primary)" }}>{f}</div>
+            ))}
+          </div>
+          <button onClick={handleCheckout} disabled={checkingOut} style={{ width:"100%", padding:"14px", borderRadius:10, border:"none", background:"linear-gradient(135deg, #06C755, #00A040)", color:"#fff", cursor:"pointer", fontSize:16, fontWeight:700, boxShadow:"0 4px 12px rgba(6,199,85,0.35)" }}>
+            {checkingOut ? "処理中..." : "今すぐ始める →"}
+          </button>
+          <div style={{ fontSize:12, color:"var(--color-text-tertiary)", marginTop:8 }}>クレジットカード払い • 翌月からいつでも解約可能</div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ textAlign:"center", marginBottom:"1.5rem" }}>
+        <div style={{ fontSize:20, fontWeight:700, color:"var(--color-text-primary)", marginBottom:4 }}>⬇️ サブスク後すぐに使えます</div>
+        <div style={{ fontSize:13, color:"var(--color-text-secondary)" }}>以下からスタンプ作成を開始してください</div>
+      </div>
+
       {isPaid && (
         <div style={{ background:"#E8F9EF", border:"1.5px solid #06C755", borderRadius:12, padding:"0.75rem 1.25rem", marginBottom:"1.25rem", display:"flex", alignItems:"center", gap:10 }}>
           <span style={{ fontSize:20 }}>✅</span>
