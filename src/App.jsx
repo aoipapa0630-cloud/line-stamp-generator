@@ -1015,8 +1015,8 @@ JSON形式のみで返してください（マークダウン不要）:
 
       {/* Terms/Privacy Modal */}
       {showTerms && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:"1rem" }}>
-          <div style={{ background:"var(--color-background-primary)", borderRadius:16, padding:"1.5rem", width:"100%", maxWidth:600, maxHeight:"85vh", overflowY:"auto" }}>
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:"1rem", overflowY:"auto" }}>
+          <div style={{ background:"var(--color-background-primary)", borderRadius:16, padding:"1.5rem", width:"100%", maxWidth:600, maxHeight:"85vh", overflowY:"auto", position:"relative", zIndex:1001 }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.25rem" }}>
               <h2 style={{ fontSize:18, fontWeight:600, margin:0, color:"var(--color-text-primary)" }}>
                 {showTerms === "terms" ? "利用規約" : showTerms === "privacy" ? "プライバシーポリシー" : "特定商取引法に基づく表記"}
