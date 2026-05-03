@@ -71,11 +71,9 @@ function drawBubble(ctx, text, bubbleType, colorSet, fontTpl) {
 
   ctx.save();
 
-  // アメコミ共通：影を先に描く
-  ctx.fillStyle = "rgba(0,0,0,0.25)";
-
   if (bubbleType === "round") {
-    // アメコミ楕円：影
+    // 影
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
     ctx.beginPath();
     ctx.ellipse(cx+5, cy+5, bw/2+12, bh/2+8, 0, 0, Math.PI*2);
     ctx.fill();
@@ -88,7 +86,8 @@ function drawBubble(ctx, text, bubbleType, colorSet, fontTpl) {
     ctx.fill(); ctx.stroke();
 
   } else if (bubbleType === "rect") {
-    // アメコミ角丸：影
+    // 影
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
     ctx.beginPath();
     ctx.roundRect(bx-2+5, by-2+5, bw+4, bh+4, 16);
     ctx.fill();
@@ -99,7 +98,7 @@ function drawBubble(ctx, text, bubbleType, colorSet, fontTpl) {
     ctx.beginPath();
     ctx.roundRect(bx-2, by-2, bw+4, bh+4, 16);
     ctx.fill(); ctx.stroke();
-    // アメコミらしい内側の二重線
+    // 内側二重線
     ctx.strokeStyle = colorSet.outline + "55";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -107,17 +106,18 @@ function drawBubble(ctx, text, bubbleType, colorSet, fontTpl) {
     ctx.stroke();
 
   } else if (bubbleType === "cloud") {
-    // アメコミ叫び型（ギザギザ）
-    const spikes = 14;
-    const outerR = Math.max(bw, bh) / 2 + 20;
-    const innerR = Math.max(bw, bh) / 2 + 4;
+    // 爆発型：サイズを抑えてキャラに被らないよう調整
+    const spikes = 12;
+    const outerR = Math.min(bw, bh) / 2 + 14;
+    const innerR = Math.min(bw, bh) / 2 + 2;
     // 影
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
     ctx.beginPath();
     for (let i = 0; i < spikes * 2; i++) {
       const angle = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
       const r = i % 2 === 0 ? outerR : innerR;
-      const px = cx + r * Math.cos(angle) + 5;
-      const py = cy + r * Math.sin(angle) + 5;
+      const px = cx + r * Math.cos(angle) + 4;
+      const py = cy + r * Math.sin(angle) + 4;
       i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
     }
     ctx.closePath(); ctx.fill();
@@ -136,7 +136,8 @@ function drawBubble(ctx, text, bubbleType, colorSet, fontTpl) {
     ctx.closePath(); ctx.fill(); ctx.stroke();
 
   } else if (bubbleType === "tail") {
-    // アメコミしっぽ付き：影
+    // 影
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
     ctx.beginPath();
     ctx.roundRect(bx-2+5, by-2+5, bw+4, bh+4, 16);
     ctx.fill();
@@ -147,20 +148,20 @@ function drawBubble(ctx, text, bubbleType, colorSet, fontTpl) {
     ctx.beginPath();
     ctx.roundRect(bx-2, by-2, bw+4, bh+4, 16);
     ctx.fill(); ctx.stroke();
-    // しっぽ（太め）
+    // しっぽを上向きに（フキダシは画像の下→口は上向き）
     ctx.beginPath();
-    ctx.moveTo(cx - 16, by + bh + 2);
-    ctx.lineTo(cx, by + bh + 28);
-    ctx.lineTo(cx + 16, by + bh + 2);
+    ctx.moveTo(cx - 16, by - 2);
+    ctx.lineTo(cx, by - 26);
+    ctx.lineTo(cx + 16, by - 2);
     ctx.fillStyle = colorSet.bubble; ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(cx - 16, by + bh + 2);
-    ctx.lineTo(cx, by + bh + 28);
-    ctx.lineTo(cx + 16, by + bh + 2);
+    ctx.moveTo(cx - 16, by - 2);
+    ctx.lineTo(cx, by - 26);
+    ctx.lineTo(cx + 16, by - 2);
     ctx.strokeStyle = colorSet.outline; ctx.lineWidth = 5; ctx.stroke();
   }
 
-  // テキスト：アウトライン付きで視認性UP
+  // テキスト
   ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = font;
   ctx.lineWidth = 4;
   ctx.strokeStyle = colorSet.outline + "88";
@@ -706,8 +707,8 @@ JSON形式のみで返してください（マークダウン不要）:
     label: { fontSize:12, fontWeight:500, color:"var(--color-text-secondary)", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8, display:"block" },
     btn: { padding: isMobile ? "10px 14px" : "8px 18px", borderRadius:8, border:"0.5px solid var(--color-border-secondary)", background:"transparent", cursor:"pointer", fontSize: isMobile ? 14 : 13, color:"var(--color-text-primary)" },
     btnPrimary: { padding: isMobile ? "12px 20px" : "10px 22px", borderRadius:8, border:"none", background:"var(--color-text-primary)", color:"var(--color-background-primary)", cursor:"pointer", fontSize: isMobile ? 15 : 14, fontWeight:500, width: isMobile ? "100%" : "auto" },
-    btnOutline: (active) => ({ padding: isMobile ? "10px 14px" : "6px 14px", borderRadius:8, border:active?"2px solid var(--color-text-primary)":"0.5px solid var(--color-border-secondary)", background:active?"var(--color-background-secondary)":"transparent", cursor:"pointer", fontSize: isMobile ? 14 : 13, color:"var(--color-text-primary)", fontWeight:active?500:400 }),
-    colorDot: (i) => ({ width: isMobile ? 32 : 26, height: isMobile ? 32 : 26, borderRadius:"50%", background:COLOR_SETS[i].bg, border:selectedColor===i?"3px solid var(--color-text-primary)":"3px solid transparent", cursor:"pointer", outline:"none", flexShrink:0 }),
+    btnOutline: (active) => ({ padding: isMobile ? "10px 14px" : "8px 16px", borderRadius:8, border: active ? "2.5px solid #06C755" : "1.5px solid var(--color-border-secondary)", background: active ? "#E8F9EF" : "transparent", cursor:"pointer", fontSize: isMobile ? 14 : 13, color: active ? "#06C755" : "var(--color-text-primary)", fontWeight: active ? 700 : 400, boxShadow: active ? "0 0 0 1px #06C755" : "none" }),
+    colorDot: (i) => ({ width: isMobile ? 36 : 30, height: isMobile ? 36 : 30, borderRadius:"50%", background:COLOR_SETS[i].bg, border: selectedColor===i ? "4px solid #06C755" : "3px solid #cccccc", cursor:"pointer", outline: selectedColor===i ? "2px solid #ffffff" : "none", flexShrink:0, boxShadow: selectedColor===i ? "0 0 0 2px #06C755" : "none" }),
     tag: { display:"inline-block", padding: isMobile ? "6px 12px" : "4px 10px", borderRadius:20, background:"var(--color-background-secondary)", border:"0.5px solid var(--color-border-tertiary)", fontSize: isMobile ? 13 : 12, margin:"2px", cursor:"pointer" },
     stepNum: (done,active) => ({ width:24, height:24, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:500, flexShrink:0, background:active?"var(--color-text-primary)":done?"var(--color-background-success)":"var(--color-background-secondary)", color:active?"var(--color-background-primary)":done?"var(--color-text-success)":"var(--color-text-tertiary)" }),
     row: { display:"flex", gap:12, flexWrap:"wrap" },
