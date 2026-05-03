@@ -30,11 +30,11 @@ const COLOR_SETS = [
 ];
 
 const BUBBLE_TYPES = [
-  { label:"なし",      value:"none"  },
-  { label:"丸型",      value:"round" },
-  { label:"角丸",      value:"rect"  },
-  { label:"雲型",      value:"cloud" },
-  { label:"しっぽ付き",value:"tail"  },
+  { label:"なし",        value:"none"  },
+  { label:"楕円",        value:"round" },
+  { label:"四角",        value:"rect"  },
+  { label:"爆発（叫び）", value:"cloud" },
+  { label:"吹き出し",    value:"tail"  },
 ];
 
 const LINE_STEPS = [
@@ -64,36 +64,109 @@ function drawBubble(ctx, text, bubbleType, colorSet, fontTpl) {
   const font = fontTpl.replace("{sz}", fontSize);
   ctx.font = font;
   const tw = ctx.measureText(text).width;
-  const padX = 28, padY = 16;
+  const padX = 30, padY = 18;
   const bw = tw + padX * 2, bh = fontSize + padY * 2;
-  const bx = (STAMP_W - bw) / 2, by = STAMP_H - bh - 18;
+  const bx = (STAMP_W - bw) / 2, by = STAMP_H - bh - 20;
+  const cx = STAMP_W / 2, cy = by + bh / 2;
 
   ctx.save();
-  ctx.fillStyle = colorSet.bubble; ctx.strokeStyle = colorSet.outline; ctx.lineWidth = 3;
+
+  // アメコミ共通：影を先に描く
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
 
   if (bubbleType === "round") {
-    ctx.beginPath(); ctx.ellipse(STAMP_W/2, by+bh/2, bw/2+10, bh/2+6, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-  } else if (bubbleType === "rect") {
-    ctx.beginPath(); ctx.roundRect(bx-4, by-4, bw+8, bh+8, 14); ctx.fill(); ctx.stroke();
-  } else if (bubbleType === "cloud") {
-    const cx=STAMP_W/2, cy=by+bh/2, rx=bw/2+12, ry=bh/2+6;
+    // アメコミ楕円：影
     ctx.beginPath();
-    for (let i=0;i<12;i++) {
-      const a=(i/12)*Math.PI*2, r=i%2===0?1.0:0.82;
-      const px=cx+rx*r*Math.cos(a), py=cy+ry*r*Math.sin(a);
-      i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    ctx.ellipse(cx+5, cy+5, bw/2+12, bh/2+8, 0, 0, Math.PI*2);
+    ctx.fill();
+    // 本体
+    ctx.fillStyle = colorSet.bubble;
+    ctx.strokeStyle = colorSet.outline;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, bw/2+12, bh/2+8, 0, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+
+  } else if (bubbleType === "rect") {
+    // アメコミ角丸：影
+    ctx.beginPath();
+    ctx.roundRect(bx-2+5, by-2+5, bw+4, bh+4, 16);
+    ctx.fill();
+    // 本体
+    ctx.fillStyle = colorSet.bubble;
+    ctx.strokeStyle = colorSet.outline;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.roundRect(bx-2, by-2, bw+4, bh+4, 16);
+    ctx.fill(); ctx.stroke();
+    // アメコミらしい内側の二重線
+    ctx.strokeStyle = colorSet.outline + "55";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(bx+4, by+4, bw-8, bh-8, 10);
+    ctx.stroke();
+
+  } else if (bubbleType === "cloud") {
+    // アメコミ叫び型（ギザギザ）
+    const spikes = 14;
+    const outerR = Math.max(bw, bh) / 2 + 20;
+    const innerR = Math.max(bw, bh) / 2 + 4;
+    // 影
+    ctx.beginPath();
+    for (let i = 0; i < spikes * 2; i++) {
+      const angle = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+      const r = i % 2 === 0 ? outerR : innerR;
+      const px = cx + r * Math.cos(angle) + 5;
+      const py = cy + r * Math.sin(angle) + 5;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath(); ctx.fill();
+    // 本体
+    ctx.fillStyle = colorSet.bubble;
+    ctx.strokeStyle = colorSet.outline;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    for (let i = 0; i < spikes * 2; i++) {
+      const angle = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+      const r = i % 2 === 0 ? outerR : innerR;
+      const px = cx + r * Math.cos(angle);
+      const py = cy + r * Math.sin(angle);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
     }
     ctx.closePath(); ctx.fill(); ctx.stroke();
+
   } else if (bubbleType === "tail") {
-    ctx.beginPath(); ctx.roundRect(bx-4, by-4, bw+8, bh+8, 12); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(STAMP_W/2-10, by+bh+4); ctx.lineTo(STAMP_W/2, by+bh+22); ctx.lineTo(STAMP_W/2+10, by+bh+4);
-    ctx.fillStyle=colorSet.bubble; ctx.fill();
-    ctx.beginPath(); ctx.moveTo(STAMP_W/2-10, by+bh+4); ctx.lineTo(STAMP_W/2, by+bh+22); ctx.lineTo(STAMP_W/2+10, by+bh+4);
-    ctx.strokeStyle=colorSet.outline; ctx.lineWidth=3; ctx.stroke();
+    // アメコミしっぽ付き：影
+    ctx.beginPath();
+    ctx.roundRect(bx-2+5, by-2+5, bw+4, bh+4, 16);
+    ctx.fill();
+    // 本体
+    ctx.fillStyle = colorSet.bubble;
+    ctx.strokeStyle = colorSet.outline;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.roundRect(bx-2, by-2, bw+4, bh+4, 16);
+    ctx.fill(); ctx.stroke();
+    // しっぽ（太め）
+    ctx.beginPath();
+    ctx.moveTo(cx - 16, by + bh + 2);
+    ctx.lineTo(cx, by + bh + 28);
+    ctx.lineTo(cx + 16, by + bh + 2);
+    ctx.fillStyle = colorSet.bubble; ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx - 16, by + bh + 2);
+    ctx.lineTo(cx, by + bh + 28);
+    ctx.lineTo(cx + 16, by + bh + 2);
+    ctx.strokeStyle = colorSet.outline; ctx.lineWidth = 5; ctx.stroke();
   }
-  ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.font=font;
-  ctx.fillStyle=colorSet.bubbleText; ctx.lineWidth=0;
-  ctx.fillText(text, STAMP_W/2, by+bh/2);
+
+  // テキスト：アウトライン付きで視認性UP
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = font;
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = colorSet.outline + "88";
+  ctx.strokeText(text, cx, cy);
+  ctx.fillStyle = colorSet.bubbleText;
+  ctx.fillText(text, cx, cy);
   ctx.restore();
 }
 
