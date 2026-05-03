@@ -12,6 +12,9 @@ export default async function handler(req, res) {
         quantity: 1,
       }],
       mode: 'subscription',
+      subscription_data: {
+        trial_period_days: 7,
+      },
       success_url: `https://line-stamp-generator-eta.vercel.app?success=true`,
       cancel_url: `https://line-stamp-generator-eta.vercel.app?canceled=true`,
     });
