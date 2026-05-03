@@ -1015,13 +1015,13 @@ JSON形式のみで返してください（マークダウン不要）:
 
       {/* Terms/Privacy Modal */}
       {showTerms && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, padding:"1rem", overflowY:"auto" }}>
-          <div style={{ background:"var(--color-background-primary)", borderRadius:16, padding:"1.5rem", width:"100%", maxWidth:600, maxHeight:"85vh", overflowY:"auto", position:"relative", zIndex:1001 }}>
+        <div style={{ position:"fixed", top:0, left:0, right:0, bottom:0, background:"#000000", zIndex:9999, overflowY:"auto", padding:"1rem" }}>
+          <div style={{ background:"#ffffff", borderRadius:16, padding:"1.5rem", width:"100%", maxWidth:600, margin:"0 auto" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.25rem" }}>
-              <h2 style={{ fontSize:18, fontWeight:600, margin:0, color:"var(--color-text-primary)" }}>
+              <h2 style={{ fontSize:18, fontWeight:600, margin:0, color:"#000000" }}>
                 {showTerms === "terms" ? "利用規約" : showTerms === "privacy" ? "プライバシーポリシー" : "特定商取引法に基づく表記"}
               </h2>
-              <button onClick={() => setShowTerms(null)} style={{ background:"none", border:"none", fontSize:20, cursor:"pointer", color:"var(--color-text-secondary)" }}>×</button>
+              <button onClick={() => setShowTerms(null)} style={{ background:"none", border:"none", fontSize:24, cursor:"pointer", color:"#000000", fontWeight:700 }}>×</button>
             </div>
             {showTerms === "tokushoho" ? (
               <div style={{ fontSize:13, color:"var(--color-text-secondary)", lineHeight:1.9 }}>
