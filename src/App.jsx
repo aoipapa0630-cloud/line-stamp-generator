@@ -60,11 +60,11 @@ const CHECKLIST_ITEMS = [
 // ---- Canvas helpers ----
 function drawBubble(ctx, text, bubbleType, colorSet, fontTpl) {
   if (bubbleType === "none" || !text) return;
-  const fontSize = text.length <= 4 ? 40 : text.length <= 6 ? 34 : 28;
+  const fontSize = text.length <= 4 ? 38 : text.length <= 6 ? 32 : 26;
   const font = fontTpl.replace("{sz}", fontSize);
   ctx.font = font;
   const tw = ctx.measureText(text).width;
-  const padX = 30, padY = 18;
+  const padX = 52, padY = 10;
   const bw = tw + padX * 2, bh = fontSize + padY * 2;
   const bx = (STAMP_W - bw) / 2, by = STAMP_H - bh - 20;
   const cx = STAMP_W / 2, cy = by + bh / 2;
