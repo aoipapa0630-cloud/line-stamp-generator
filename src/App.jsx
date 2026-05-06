@@ -15,9 +15,16 @@ const STAMP_TEXTS = [
 ];
 
 const FONT_OPTIONS = [
-  { label:"丸ゴシック", value:"bold {sz}px 'Hiragino Maru Gothic Pro','M PLUS Rounded 1c',sans-serif" },
-  { label:"ポップ体",   value:"bold {sz}px 'DotGothic16','M PLUS Rounded 1c',cursive" },
-  { label:"手書き風",   value:"bold {sz}px 'Klee One','Kaisei Decol',serif" },
+  { label:"丸ゴシック",    value:"bold {sz}px 'Hiragino Maru Gothic Pro','M PLUS Rounded 1c',sans-serif" },
+  { label:"ポップ体",      value:"bold {sz}px 'DotGothic16','M PLUS Rounded 1c',cursive" },
+  { label:"手書き風",      value:"bold {sz}px 'Klee One','Kaisei Decol',serif" },
+  { label:"やさしい丸文字", value:"{sz}px 'M PLUS Rounded 1c','Nunito',sans-serif" },
+  { label:"ふんわり明朝",   value:"{sz}px 'Noto Serif JP','游明朝',serif" },
+  { label:"おしゃれ細字",   value:"300 {sz}px 'Noto Sans JP','ヒラギノ角ゴ',sans-serif" },
+  { label:"キュート太字",   value:"900 {sz}px 'M PLUS Rounded 1c','Hiragino Maru Gothic Pro',sans-serif" },
+  { label:"えんぴつ風",     value:"{sz}px 'Yomogi','Klee One',cursive" },
+  { label:"ガーリー明朝",   value:"bold {sz}px 'Kaisei Decol','Noto Serif JP',serif" },
+  { label:"クール細ゴシック", value:"100 {sz}px 'Noto Sans JP','Hiragino Kaku Gothic Pro',sans-serif" },
 ];
 
 const COLOR_SETS = [
@@ -60,11 +67,15 @@ const CHECKLIST_ITEMS = [
 // ---- Canvas helpers ----
 function drawBubble(ctx, text, bubbleType, colorSet, fontTpl) {
   if (bubbleType === "none" || !text) return;
-  const fontSize = text.length <= 4 ? 38 : text.length <= 6 ? 32 : 26;
+  // フォントサイズ：文字数に応じて縮小
+  const fontSize = text.length <= 3 ? 40 : text.length <= 5 ? 34 : text.length <= 7 ? 29 : 24;
   const font = fontTpl.replace("{sz}", fontSize);
   ctx.font = font;
   const tw = ctx.measureText(text).width;
-  const padX = 52, padY = 10;
+  // 横幅：常に横長になるよう余白を大きく固定
+  const minBW = 180; // 最小フキダシ幅（px）
+  const padX = Math.max(60, (minBW - tw) / 2);
+  const padY = 10;
   const bw = tw + padX * 2, bh = fontSize + padY * 2;
   const bx = (STAMP_W - bw) / 2, by = STAMP_H - bh - 20;
   const cx = STAMP_W / 2, cy = by + bh / 2;
