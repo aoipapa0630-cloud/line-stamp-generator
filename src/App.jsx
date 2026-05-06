@@ -40,7 +40,6 @@ const BUBBLE_TYPES = [
   { label:"なし",        value:"none"  },
   { label:"楕円",        value:"round" },
   { label:"四角",        value:"rect"  },
-  { label:"爆発（叫び）", value:"cloud" },
   { label:"吹き出し",    value:"tail"  },
 ];
 
@@ -115,37 +114,6 @@ function drawBubble(ctx, text, bubbleType, colorSet, fontTpl) {
     ctx.beginPath();
     ctx.roundRect(bx+4, by+4, bw-8, bh-8, 10);
     ctx.stroke();
-
-  } else if (bubbleType === "cloud") {
-    // 爆発型：テキストがはみ出さないようbwベースで半径を決定
-    const spikes = 12;
-    const halfDiag = Math.sqrt((bw / 2) * (bw / 2) + (bh / 2) * (bh / 2));
-    const outerR = halfDiag + 20;
-    const innerR = halfDiag + 4;
-    // 影
-    ctx.fillStyle = "rgba(0,0,0,0.25)";
-    ctx.beginPath();
-    for (let i = 0; i < spikes * 2; i++) {
-      const angle = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
-      const r = i % 2 === 0 ? outerR : innerR;
-      const px = cx + r * Math.cos(angle) + 4;
-      const py = cy + r * Math.sin(angle) + 4;
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-    }
-    ctx.closePath(); ctx.fill();
-    // 本体
-    ctx.fillStyle = colorSet.bubble;
-    ctx.strokeStyle = colorSet.outline;
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    for (let i = 0; i < spikes * 2; i++) {
-      const angle = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
-      const r = i % 2 === 0 ? outerR : innerR;
-      const px = cx + r * Math.cos(angle);
-      const py = cy + r * Math.sin(angle);
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-    }
-    ctx.closePath(); ctx.fill(); ctx.stroke();
 
   } else if (bubbleType === "tail") {
     // 影
