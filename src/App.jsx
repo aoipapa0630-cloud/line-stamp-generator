@@ -432,6 +432,7 @@ export default function App() {
   const [showTerms, setShowTerms] = useState(null);
   const [isPaid, setIsPaid] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [isDemo] = useState(function(){ return new URLSearchParams(window.location.search).get("demo")==="true"; });
   const [aiDesc, setAiDesc] = useState(null);
   const [generatingDesc, setGeneratingDesc] = useState(false);
   const fileRef = useRef();
@@ -621,6 +622,22 @@ export default function App() {
       {editingStamp!==null&&<DrawingEditor stamp={stamps[editingStamp]} onSave={function(d){handleSaveEdit(editingStamp,d);}} onClose={function(){setEditingStamp(null);}} />}
       {showChecklist&&<ChecklistModal stampCount={stamps.length} onConfirm={function(){setShowChecklist(false);doDownload();}} onClose={function(){setShowChecklist(false);}} />}
 
+      {/* Demo Banner */}
+      {isDemo&&(
+        <div style={{background:"linear-gradient(135deg,#FF9800,#F57C00)",borderRadius:12,padding:"14px 20px",marginBottom:"1rem",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:22}}>🎯</span>
+            <div>
+              <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>デモモードでご覧いただいています</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.85)"}}>スタンプ生成まで無料でお試しいただけます。ZIPダウンロードは月額980円のプランにご登録ください。</div>
+            </div>
+          </div>
+          <button onClick={handleCheckout} disabled={checkingOut} style={{padding:"10px 20px",borderRadius:8,border:"2px solid rgba(255,255,255,0.7)",background:"rgba(255,255,255,0.15)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,flexShrink:0,backdropFilter:"blur(4px)"}}>
+            {checkingOut?"処理中...":"登録して使い始める →"}
+          </button>
+        </div>
+      )}
+
       {/* Hero */}
       <div style={{background:"linear-gradient(135deg,#06C755 0%,#00A040 100%)",borderRadius:16,padding:isMobile?"2rem 1.25rem":"3rem 2.5rem",marginBottom:"1.5rem",color:"#fff",position:"relative",overflow:"hidden",textAlign:"center"}}>
         <div style={{position:"absolute",top:-20,right:-20,width:150,height:150,borderRadius:"50%",background:"rgba(255,255,255,0.08)"}} />
@@ -683,6 +700,7 @@ export default function App() {
       </div>
 
       {isPaid&&<div style={{background:"#E8F9EF",border:"1.5px solid #06C755",borderRadius:12,padding:"0.75rem 1.25rem",marginBottom:"1.25rem",display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:20}}>✅</span><div style={{fontSize:14,fontWeight:600,color:"#00A040"}}>サブスクリプション有効 — フル機能をご利用いただけます</div></div>}
+      {isDemo&&<div style={{background:"#FFF8E1",border:"1.5px solid #FFB300",borderRadius:12,padding:"0.75rem 1.25rem",marginBottom:"1.25rem",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}><span style={{fontSize:20}}>🎯</span><div style={{flex:1}}><div style={{fontSize:14,fontWeight:600,color:"#E65100"}}>デモモードで体験中</div><div style={{fontSize:12,color:"#795548",marginTop:2}}>スタンプの生成・編集まで無料で体験できます。ZIPダウンロードは月額980円のサブスクリプション登録後にご利用いただけます。</div></div></div>}
 
       {/* Progress */}
       <div style={{display:"flex",gap:4,marginBottom:"1.25rem",alignItems:"center",background:"var(--color-background-primary)",borderRadius:12,padding:"12px 16px",border:"0.5px solid var(--color-border-tertiary)"}}>
@@ -854,12 +872,27 @@ export default function App() {
                 <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>{stamps.length}枚生成 • 編集済み: {editedCount}枚</div>
               </div>
             </div>
-            <button
-              style={{padding:isMobile?"12px 20px":"10px 22px",borderRadius:10,border:"none",background:editedCount===stamps.length?"linear-gradient(135deg,#06C755,#00A040)":"var(--color-border-tertiary)",color:"#fff",cursor:editedCount===stamps.length?"pointer":"not-allowed",fontSize:isMobile?15:14,fontWeight:600,width:isMobile?"100%":"auto"}}
-              onClick={function(){editedCount===stamps.length&&setShowChecklist(true);}}
-            >
-              {editedCount===stamps.length?"📦 申請前チェック → ZIP ↓":"✏️ 手描き未完了 "+(stamps.length-editedCount)+"枚"}
-            </button>
+            {isDemo ? (
+              editedCount===stamps.length ? (
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontSize:13,color:"#795548",marginBottom:8}}>デモモードではZIPダウンロードは利用できません</div>
+                  <button onClick={handleCheckout} disabled={checkingOut} style={{padding:isMobile?"12px 20px":"10px 22px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#FF9800,#F57C00)",color:"#fff",cursor:"pointer",fontSize:isMobile?15:14,fontWeight:600,width:isMobile?"100%":"auto"}}>
+                    {checkingOut?"処理中...":"🚀 月額980円で登録 → ZIPダウンロード"}
+                  </button>
+                </div>
+              ) : (
+                <button style={{padding:isMobile?"12px 20px":"10px 22px",borderRadius:10,border:"none",background:"var(--color-border-tertiary)",color:"#fff",cursor:"not-allowed",fontSize:isMobile?15:14,fontWeight:600,width:isMobile?"100%":"auto"}}>
+                  {"✏️ 手描き未完了 "+(stamps.length-editedCount)+"枚"}
+                </button>
+              )
+            ) : (
+              <button
+                style={{padding:isMobile?"12px 20px":"10px 22px",borderRadius:10,border:"none",background:editedCount===stamps.length?"linear-gradient(135deg,#06C755,#00A040)":"var(--color-border-tertiary)",color:"#fff",cursor:editedCount===stamps.length?"pointer":"not-allowed",fontSize:isMobile?15:14,fontWeight:600,width:isMobile?"100%":"auto"}}
+                onClick={function(){editedCount===stamps.length&&setShowChecklist(true);}}
+              >
+                {editedCount===stamps.length?"📦 申請前チェック → ZIP ↓":"✏️ 手描き未完了 "+(stamps.length-editedCount)+"枚"}
+              </button>
+            )}
           </div>
 
           <div style={{padding:"12px 14px",background:editedCount===stamps.length?"var(--color-background-success)":"var(--color-background-danger)",border:"0.5px solid "+(editedCount===stamps.length?"var(--color-border-success)":"var(--color-border-danger)"),borderRadius:8,marginBottom:"1rem",lineHeight:1.65}}>
