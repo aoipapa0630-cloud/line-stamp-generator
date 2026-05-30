@@ -141,8 +141,8 @@ function drawStamp(canvas, imageEl, text, colorSet, fontTpl, bgStyle, bubbleType
 // ② キー画像生成
 function generateKeyImages(imageEl, colorSet, bgStyle) {
   return [
-    { name:"main_image.png", w:240, h:240 },
-    { name:"talkroom_image.png", w:96, h:74 },
+    { name:"main.png", w:240, h:240 },
+    { name:"tab.png", w:96, h:74 },
   ].map(function(item) {
     const c = document.createElement("canvas");
     c.width = item.w; c.height = item.h;
@@ -435,6 +435,9 @@ export default function App() {
   const [isDemo] = useState(function(){ return new URLSearchParams(window.location.search).get("demo")==="true"; });
   const [aiDesc, setAiDesc] = useState(null);
   const [generatingDesc, setGeneratingDesc] = useState(false);
+  const [animEnabled, setAnimEnabled] = useState(false);
+  const [animType, setAnimType] = useState("bounce");
+  const [generatingAnim, setGeneratingAnim] = useState(false);
   const fileRef = useRef();
 
   // ⑦ localStorage復元
@@ -590,19 +593,96 @@ export default function App() {
     });
   };
 
+  // アニメーションGIF生成
+  const generateAnimatedGif = async function(stamp, imgEl) {
+    const { GIFEncoder, quantize, applyPalette } = await import("https://esm.sh/gifenc@1.0.3");
+    const FRAMES = 8, DELAY = 80;
+    const W = STAMP_W, H = STAMP_H;
+    const colorSet = COLOR_SETS[selectedColor];
+    const fontTpl = FONT_OPTIONS[selectedFont].value;
+    const encoder = GIFEncoder();
+
+    for (let f = 0; f < FRAMES; f++) {
+      const t = f / FRAMES;
+      const c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const ctx = c.getContext("2d");
+
+      // ベース描画
+      drawStamp(c, imgEl, stamp.text, colorSet, fontTpl, bgStyle, bubbleType, bubbleOffsetY, stamp.textColor||null);
+
+      // アニメーション変形
+      const c2 = document.createElement("canvas");
+      c2.width = W; c2.height = H;
+      const ctx2 = c2.getContext("2d");
+      ctx2.save();
+      ctx2.translate(W/2, H/2);
+
+      if (animType === "bounce") {
+        const dy = Math.sin(t * Math.PI * 2) * 14;
+        ctx2.translate(0, dy);
+      } else if (animType === "float") {
+        const dy = Math.sin(t * Math.PI * 2) * 8;
+        const sc = 1 + Math.sin(t * Math.PI * 2) * 0.03;
+        ctx2.translate(0, dy); ctx2.scale(sc, sc);
+      } else if (animType === "shake") {
+        const dx = Math.sin(t * Math.PI * 4) * 10;
+        const rot = Math.sin(t * Math.PI * 4) * 0.06;
+        ctx2.translate(dx, 0); ctx2.rotate(rot);
+      } else if (animType === "spin") {
+        const rot = t * Math.PI * 2;
+        ctx2.rotate(rot);
+      } else if (animType === "zoom") {
+        const sc = 0.88 + Math.abs(Math.sin(t * Math.PI)) * 0.18;
+        ctx2.scale(sc, sc);
+      }
+
+      ctx2.translate(-W/2, -H/2);
+      ctx2.drawImage(c, 0, 0);
+      ctx2.restore();
+
+      // ピクセルデータを取得してパレット量子化
+      const imageData = ctx2.getImageData(0, 0, W, H);
+      const { data } = imageData;
+      const pixels = [];
+      for (let i = 0; i < data.length; i += 4) {
+        pixels.push([data[i], data[i+1], data[i+2]]);
+      }
+      const palette = quantize(new Uint8Array(data), 256, { format:"rgb565", oneBitAlpha:true });
+      const index = applyPalette(new Uint8Array(data), palette, "rgb565");
+      encoder.writeFrame(index, W, H, { palette, delay: DELAY, transparent: bgStyle==="transparent" });
+    }
+    encoder.finish();
+    return new Blob([encoder.bytes()], { type:"image/gif" });
+  };
+
   const doDownload = async function() {
     try {
+      setGeneratingAnim(animEnabled);
       const JSZip = (await import("https://esm.sh/jszip@3")).default;
       const zip = new JSZip();
-      stamps.forEach(function(s,i){ zip.file("stamp_"+String(i+1).padStart(2,"0")+".png", s.dataUrl.split(",")[1], {base64:true}); });
+      // 静止画
+      stamps.forEach(function(s,i){ zip.file(String(i+1).padStart(2,"0")+".png", s.dataUrl.split(",")[1], {base64:true}); });
+      // キー画像
       if (images.length) {
         generateKeyImages(images[0].el, COLOR_SETS[selectedColor], bgStyle).forEach(function(ki){
           zip.file(ki.name, ki.dataUrl.split(",")[1], {base64:true});
         });
       }
+      // アニメーションGIF
+      if (animEnabled) {
+        const animFolder = zip.folder("animation");
+        for (let i=0; i<stamps.length; i++) {
+          const imgEl = images[stamps[i].imgIdx % images.length].el;
+          const gifBlob = await generateAnimatedGif(stamps[i], imgEl);
+          const buf = await gifBlob.arrayBuffer();
+          animFolder.file(String(i+1).padStart(2,"0")+".gif", buf);
+        }
+      }
+      setGeneratingAnim(false);
       const blob = await zip.generateAsync({type:"blob"});
       const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="line_stamps.zip"; a.click();
-    } catch(err) { console.error(err); alert("ZIPのダウンロードに失敗しました。"); }
+    } catch(err) { console.error(err); setGeneratingAnim(false); alert("ZIPのダウンロードに失敗しました。"); }
   };
 
   const editedCount = stamps.filter(function(s){return s.edited;}).length;
@@ -855,6 +935,33 @@ export default function App() {
           )}
           {!analysis&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:"1rem"}}>{STAMP_TEXTS.slice(0,count).map(function(t,i){return <span key={i} style={Object.assign({},S.tag,{cursor:"default"})}>{t}</span>;})}</div>}
 
+          {/* アニメーション設定 */}
+          <div style={{marginBottom:"1rem",padding:"14px 16px",background:"linear-gradient(135deg,#F3E5F5,#EDE7F6)",borderRadius:10,border:"1.5px solid #CE93D8"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:animEnabled?12:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <span style={{fontSize:18}}>✨</span>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#6A1B9A"}}>アニメーションスタンプ</div>
+                  <div style={{fontSize:11,color:"#9C27B0"}}>GIF形式でZIPに同梱されます（LINE申請対応）</div>
+                </div>
+              </div>
+              <button onClick={function(){setAnimEnabled(function(v){return !v;});}} style={{padding:"6px 14px",borderRadius:20,border:"none",background:animEnabled?"#9C27B0":"rgba(156,39,176,0.15)",color:animEnabled?"#fff":"#6A1B9A",cursor:"pointer",fontSize:12,fontWeight:700}}>
+                {animEnabled?"ON ✓":"OFF"}
+              </button>
+            </div>
+            {animEnabled&&(
+              <div>
+                <div style={{fontSize:12,color:"#6A1B9A",marginBottom:8,fontWeight:500}}>アニメーションの種類</div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {[{v:"bounce",l:"🐾 ぴょんぴょん"},{v:"float",l:"🫧 ふわふわ"},{v:"shake",l:"😆 ぷるぷる"},{v:"spin",l:"🌀 ぐるぐる"},{v:"zoom",l:"💥 ズームイン"}].map(function(a){
+                    const active=animType===a.v;
+                    return <button key={a.v} onClick={function(){setAnimType(a.v);}} style={{padding:"7px 12px",borderRadius:8,border:"1.5px solid "+(active?"#9C27B0":"rgba(156,39,176,0.3)"),background:active?"#9C27B0":"transparent",color:active?"#fff":"#6A1B9A",cursor:"pointer",fontSize:12,fontWeight:active?700:400}}>{a.l}</button>;
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button style={{padding:isMobile?"14px 24px":"12px 28px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#06C755,#00A040)",color:"#fff",cursor:"pointer",fontSize:isMobile?16:15,fontWeight:700,boxShadow:"0 2px 12px rgba(6,199,85,0.35)",width:isMobile?"100%":"auto"}} onClick={generateStamps}>
             🎨 スタンプを{count}枚生成する →
           </button>
@@ -890,7 +997,7 @@ export default function App() {
                 style={{padding:isMobile?"12px 20px":"10px 22px",borderRadius:10,border:"none",background:editedCount===stamps.length?"linear-gradient(135deg,#06C755,#00A040)":"var(--color-border-tertiary)",color:"#fff",cursor:editedCount===stamps.length?"pointer":"not-allowed",fontSize:isMobile?15:14,fontWeight:600,width:isMobile?"100%":"auto"}}
                 onClick={function(){editedCount===stamps.length&&setShowChecklist(true);}}
               >
-                {editedCount===stamps.length?"📦 申請前チェック → ZIP ↓":"✏️ 手描き未完了 "+(stamps.length-editedCount)+"枚"}
+                {generatingAnim?"✨ アニメーションGIF生成中...":editedCount===stamps.length?"📦 申請前チェック → ZIP ↓":"✏️ 手描き未完了 "+(stamps.length-editedCount)+"枚"}
               </button>
             )}
           </div>
