@@ -596,65 +596,74 @@ export default function App() {
 
   // アニメーションGIF生成
   const generateAnimatedGif = async function(stamp, imgEl) {
-    const { GIFEncoder, quantize, applyPalette } = await import("https://esm.sh/gifenc@1.0.3");
     const FRAMES = 8, DELAY = 80;
     const W = STAMP_W, H = STAMP_H;
     const colorSet = COLOR_SETS[selectedColor];
     const fontTpl = FONT_OPTIONS[selectedFont].value;
-    const encoder = GIFEncoder();
 
+    // フレーム画像を生成
+    const frameDataUrls = [];
     for (let f = 0; f < FRAMES; f++) {
       const t = f / FRAMES;
       const c = document.createElement("canvas");
       c.width = W; c.height = H;
-      const ctx = c.getContext("2d");
-
-      // ベース描画
       drawStamp(c, imgEl, stamp.text, colorSet, fontTpl, bgStyle, bubbleType, bubbleOffsetY, stamp.textColor||null);
-
-      // アニメーション変形
       const c2 = document.createElement("canvas");
       c2.width = W; c2.height = H;
       const ctx2 = c2.getContext("2d");
       ctx2.save();
       ctx2.translate(W/2, H/2);
-
       if (animType === "bounce") {
-        const dy = Math.sin(t * Math.PI * 2) * 14;
-        ctx2.translate(0, dy);
+        ctx2.translate(0, Math.sin(t * Math.PI * 2) * 14);
       } else if (animType === "float") {
-        const dy = Math.sin(t * Math.PI * 2) * 8;
         const sc = 1 + Math.sin(t * Math.PI * 2) * 0.03;
-        ctx2.translate(0, dy); ctx2.scale(sc, sc);
+        ctx2.translate(0, Math.sin(t * Math.PI * 2) * 8); ctx2.scale(sc, sc);
       } else if (animType === "shake") {
-        const dx = Math.sin(t * Math.PI * 4) * 10;
-        const rot = Math.sin(t * Math.PI * 4) * 0.06;
-        ctx2.translate(dx, 0); ctx2.rotate(rot);
+        ctx2.translate(Math.sin(t * Math.PI * 4) * 10, 0); ctx2.rotate(Math.sin(t * Math.PI * 4) * 0.06);
       } else if (animType === "spin") {
-        const rot = t * Math.PI * 2;
-        ctx2.rotate(rot);
+        ctx2.rotate(t * Math.PI * 2);
       } else if (animType === "zoom") {
-        const sc = 0.88 + Math.abs(Math.sin(t * Math.PI)) * 0.18;
-        ctx2.scale(sc, sc);
+        const sc = 0.88 + Math.abs(Math.sin(t * Math.PI)) * 0.18; ctx2.scale(sc, sc);
       }
-
       ctx2.translate(-W/2, -H/2);
       ctx2.drawImage(c, 0, 0);
       ctx2.restore();
-
-      // ピクセルデータを取得してパレット量子化
-      const imageData = ctx2.getImageData(0, 0, W, H);
-      const { data } = imageData;
-      const pixels = [];
-      for (let i = 0; i < data.length; i += 4) {
-        pixels.push([data[i], data[i+1], data[i+2]]);
-      }
-      const palette = quantize(new Uint8Array(data), 256, { format:"rgb565", oneBitAlpha:true });
-      const index = applyPalette(new Uint8Array(data), palette, "rgb565");
-      encoder.writeFrame(index, W, H, { palette, delay: DELAY, transparent: bgStyle==="transparent" });
+      frameDataUrls.push(c2.toDataURL("image/png"));
     }
-    encoder.finish();
-    return new Blob([encoder.bytes()], { type:"image/gif" });
+
+    // gif.js を使ってGIF生成
+    return new Promise(function(resolve, reject) {
+      var script = document.querySelector('script[src*="gif.js"]');
+      var loadGif = function() {
+        var gif = new window.GIF({
+          workers: 2, quality: 10, width: W, height: H,
+          workerScript: "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js"
+        });
+        var loaded = 0;
+        frameDataUrls.forEach(function(dataUrl) {
+          var img = new Image();
+          img.onload = function() {
+            gif.addFrame(img, { delay: DELAY });
+            loaded++;
+            if (loaded === frameDataUrls.length) {
+              gif.on("finished", function(blob) { resolve(blob); });
+              gif.on("error", reject);
+              gif.render();
+            }
+          };
+          img.src = dataUrl;
+        });
+      };
+      if (window.GIF) {
+        loadGif();
+      } else {
+        var s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js";
+        s.onload = loadGif;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      }
+    });
   };
 
   const doDownload = async function() {
