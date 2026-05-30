@@ -438,6 +438,7 @@ export default function App() {
   const [animEnabled, setAnimEnabled] = useState(false);
   const [animType, setAnimType] = useState("bounce");
   const [generatingAnim, setGeneratingAnim] = useState(false);
+  const [animPreview, setAnimPreview] = useState(null); // {idx, gifUrl}
   const fileRef = useRef();
 
   // ⑦ localStorage復元
@@ -701,6 +702,21 @@ export default function App() {
     <div style={Object.assign({},S.app,{background:"var(--color-background-secondary)",minHeight:"100vh"})}>
       {editingStamp!==null&&<DrawingEditor stamp={stamps[editingStamp]} onSave={function(d){handleSaveEdit(editingStamp,d);}} onClose={function(){setEditingStamp(null);}} />}
       {showChecklist&&<ChecklistModal stampCount={stamps.length} onConfirm={function(){setShowChecklist(false);doDownload();}} onClose={function(){setShowChecklist(false);}} />}
+
+      {/* アニメーションプレビューモーダル */}
+      {animPreview&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1001,padding:"1rem"}} onClick={function(){URL.revokeObjectURL(animPreview.gifUrl);setAnimPreview(null);}}>
+          <div style={{background:"#1a1a2e",borderRadius:16,padding:"1.5rem",maxWidth:420,width:"100%",border:"1.5px solid rgba(255,255,255,0.15)",textAlign:"center"}} onClick={function(e){e.stopPropagation();}}>
+            <div style={{fontSize:15,fontWeight:600,color:"#fff",marginBottom:4}}>✨ アニメーションプレビュー</div>
+            <div style={{fontSize:12,color:"#a8b2d8",marginBottom:16}}>スタンプ {animPreview.idx+1}枚目 — {animPreview.text}</div>
+            <div style={{background:"repeating-conic-gradient(#555 0% 25%,#333 0% 50%) 0 0/16px 16px",borderRadius:10,overflow:"hidden",marginBottom:16,display:"inline-block"}}>
+              <img src={animPreview.gifUrl} style={{display:"block",maxWidth:"100%",width:280}} alt="アニメーションプレビュー" />
+            </div>
+            <div style={{fontSize:11,color:"#a8b2d8",marginBottom:16}}>タップ/クリックで閉じる</div>
+            <button onClick={function(){URL.revokeObjectURL(animPreview.gifUrl);setAnimPreview(null);}} style={{padding:"10px 28px",borderRadius:8,border:"none",background:"#e94560",color:"#fff",cursor:"pointer",fontSize:14,fontWeight:600}}>閉じる</button>
+          </div>
+        </div>
+      )}
 
       {/* Demo Banner */}
       {isDemo&&(
@@ -1047,6 +1063,18 @@ export default function App() {
                       <input type="color" value={s.textColor||COLOR_SETS[selectedColor].bubbleText} onChange={function(e){handleStampTextColor(i,e.target.value);}} style={{width:20,height:20,padding:0,border:"none",borderRadius:3,cursor:"pointer"}} />
                       {s.textColor&&<button onClick={function(){handleStampTextColor(i,null);}} style={{fontSize:9,padding:"1px 5px",borderRadius:3,border:"0.5px solid var(--color-border-tertiary)",background:"transparent",cursor:"pointer",color:"var(--color-text-tertiary)"}}>リセット</button>}
                     </div>
+                    {/* アニメプレビューボタン */}
+                    {animEnabled&&(
+                      <button onClick={async function(){
+                        if (!images.length) return;
+                        const imgEl = images[s.imgIdx%images.length].el;
+                        const gifBlob = await generateAnimatedGif(s, imgEl);
+                        const url = URL.createObjectURL(gifBlob);
+                        setAnimPreview({idx:i, gifUrl:url, text:s.text});
+                      }} style={{width:"100%",padding:isMobile?"7px 0":"4px 0",borderRadius:6,border:"1px solid #9C27B0",background:"rgba(156,39,176,0.08)",cursor:"pointer",fontSize:isMobile?12:10,color:"#9C27B0",fontWeight:500,marginBottom:4}}>
+                        ▶ アニメ確認
+                      </button>
+                    )}
                     <button onClick={function(){setEditingStamp(i);}} style={{width:"100%",padding:isMobile?"8px 0":"5px 0",borderRadius:6,border:s.edited?"0.5px solid var(--color-border-success)":"1.5px solid var(--color-border-danger)",background:s.edited?"transparent":"var(--color-background-danger)",cursor:"pointer",fontSize:isMobile?13:11,color:s.edited?"var(--color-text-success)":"var(--color-text-danger)",fontWeight:s.edited?400:500}}>
                       {s.edited?"✓ 編集済み":"✏️ 手描き必須"}
                     </button>
