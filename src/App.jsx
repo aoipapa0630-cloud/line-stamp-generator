@@ -597,70 +597,59 @@ export default function App() {
   // アニメーションGIF生成
   const generateAnimatedGif = async function(stamp, imgEl) {
     const FRAMES = 6, DELAY = 100;
-    const W = 185, H = 160; // 半サイズで生成（LINEはリサイズされる）
-    const SW = STAMP_W, SH = STAMP_H;
+    const W = 185, H = 160;
     const colorSet = COLOR_SETS[selectedColor];
     const fontTpl = FONT_OPTIONS[selectedFont].value;
 
-    const frameDataUrls = [];
+    // フレーム画像を生成
+    const frameCanvases = [];
     for (let f = 0; f < FRAMES; f++) {
       const t = f / FRAMES;
       const c = document.createElement("canvas");
-      c.width = SW; c.height = SH;
+      c.width = STAMP_W; c.height = STAMP_H;
       drawStamp(c, imgEl, stamp.text, colorSet, fontTpl, bgStyle, bubbleType, bubbleOffsetY, stamp.textColor||null);
-
-      // 小さいキャンバスに変形して描画
       const c2 = document.createElement("canvas");
       c2.width = W; c2.height = H;
       const ctx2 = c2.getContext("2d");
       ctx2.save();
       ctx2.translate(W/2, H/2);
-      if (animType === "bounce") {
-        ctx2.translate(0, Math.sin(t * Math.PI * 2) * 7);
-      } else if (animType === "float") {
-        const sc = 1 + Math.sin(t * Math.PI * 2) * 0.03;
-        ctx2.translate(0, Math.sin(t * Math.PI * 2) * 4); ctx2.scale(sc, sc);
-      } else if (animType === "shake") {
-        ctx2.translate(Math.sin(t * Math.PI * 4) * 5, 0); ctx2.rotate(Math.sin(t * Math.PI * 4) * 0.05);
-      } else if (animType === "spin") {
-        ctx2.rotate(t * Math.PI * 2);
-      } else if (animType === "zoom") {
-        const sc = 0.88 + Math.abs(Math.sin(t * Math.PI)) * 0.18; ctx2.scale(sc, sc);
-      }
+      if (animType === "bounce") { ctx2.translate(0, Math.sin(t * Math.PI * 2) * 7); }
+      else if (animType === "float") { const sc=1+Math.sin(t*Math.PI*2)*0.03; ctx2.translate(0,Math.sin(t*Math.PI*2)*4); ctx2.scale(sc,sc); }
+      else if (animType === "shake") { ctx2.translate(Math.sin(t*Math.PI*4)*5,0); ctx2.rotate(Math.sin(t*Math.PI*4)*0.05); }
+      else if (animType === "spin") { ctx2.rotate(t * Math.PI * 2); }
+      else if (animType === "zoom") { const sc=0.88+Math.abs(Math.sin(t*Math.PI))*0.18; ctx2.scale(sc,sc); }
       ctx2.translate(-W/2, -H/2);
       ctx2.drawImage(c, 0, 0, W, H);
       ctx2.restore();
-      frameDataUrls.push(c2.toDataURL("image/png"));
+      frameCanvases.push(c2);
     }
 
+    // gif.js をworkerScript不要モードで使用
     return new Promise(function(resolve, reject) {
-      var loadGif = function() {
-        var gif = new window.GIF({
-          workers: 2, quality: 15, width: W, height: H,
-          workerScript: "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js"
-        });
-        var loaded = 0;
-        frameDataUrls.forEach(function(dataUrl) {
-          var img = new Image();
-          img.onload = function() {
-            gif.addFrame(img, { delay: DELAY });
-            loaded++;
-            if (loaded === frameDataUrls.length) {
-              gif.on("finished", function(blob) { resolve(blob); });
-              gif.on("error", reject);
-              gif.render();
-            }
-          };
-          img.src = dataUrl;
-        });
+      var loadAndRender = function() {
+        try {
+          var gif = new window.GIF({
+            workers: 1,
+            quality: 15,
+            width: W,
+            height: H,
+            workerScript: "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js"
+          });
+          frameCanvases.forEach(function(canvas) {
+            gif.addFrame(canvas, { delay: DELAY, copy: true });
+          });
+          gif.on("finished", function(blob) { resolve(blob); });
+          gif.on("error", function(e) { reject(e); });
+          gif.render();
+        } catch(e) { reject(e); }
       };
       if (window.GIF) {
-        loadGif();
+        loadAndRender();
       } else {
         var s = document.createElement("script");
         s.src = "https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js";
-        s.onload = loadGif;
-        s.onerror = reject;
+        s.onload = loadAndRender;
+        s.onerror = function() { reject(new Error("gif.js load failed")); };
         document.head.appendChild(s);
       }
     });
