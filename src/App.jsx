@@ -1005,7 +1005,7 @@ export default function App() {
               </div>
             </div>
             {isDemo ? (
-              editedCount===stamps.length ? (
+              editedCount>=1 ? (
                 <div style={{textAlign:"center"}}>
                   <div style={{fontSize:13,color:"#795548",marginBottom:8}}>デモモードではZIPダウンロードは利用できません</div>
                   <button onClick={handleCheckout} disabled={checkingOut} style={{padding:isMobile?"12px 20px":"10px 22px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#FF9800,#F57C00)",color:"#fff",cursor:"pointer",fontSize:isMobile?15:14,fontWeight:600,width:isMobile?"100%":"auto"}}>
@@ -1014,25 +1014,25 @@ export default function App() {
                 </div>
               ) : (
                 <button style={{padding:isMobile?"12px 20px":"10px 22px",borderRadius:10,border:"none",background:"var(--color-border-tertiary)",color:"#fff",cursor:"not-allowed",fontSize:isMobile?15:14,fontWeight:600,width:isMobile?"100%":"auto"}}>
-                  {"✏️ 手描き未完了 "+(stamps.length-editedCount)+"枚"}
+                  {"✏️ まず1枚手描き加工してください"}
                 </button>
               )
             ) : (
               <button
-                style={{padding:isMobile?"12px 20px":"10px 22px",borderRadius:10,border:"none",background:editedCount===stamps.length?"linear-gradient(135deg,#06C755,#00A040)":"var(--color-border-tertiary)",color:"#fff",cursor:editedCount===stamps.length?"pointer":"not-allowed",fontSize:isMobile?15:14,fontWeight:600,width:isMobile?"100%":"auto"}}
-                onClick={function(){editedCount===stamps.length&&setShowChecklist(true);}}
+                style={{padding:isMobile?"12px 20px":"10px 22px",borderRadius:10,border:"none",background:editedCount>=1?"linear-gradient(135deg,#06C755,#00A040)":"var(--color-border-tertiary)",color:"#fff",cursor:editedCount>=1?"pointer":"not-allowed",fontSize:isMobile?15:14,fontWeight:600,width:isMobile?"100%":"auto"}}
+                onClick={function(){editedCount>=1&&setShowChecklist(true);}}
               >
-                {generatingAnim?"✨ アニメーションGIF生成中...":editedCount===stamps.length?"📦 申請前チェック → ZIP ↓":"✏️ 手描き未完了 "+(stamps.length-editedCount)+"枚"}
+                {generatingAnim?"✨ アニメーションGIF生成中...":editedCount>=1?"📦 申請前チェック → ZIP ↓":"✏️ まず1枚手描き加工してください"}
               </button>
             )}
           </div>
 
-          <div style={{padding:"12px 14px",background:editedCount===stamps.length?"var(--color-background-success)":"var(--color-background-danger)",border:"0.5px solid "+(editedCount===stamps.length?"var(--color-border-success)":"var(--color-border-danger)"),borderRadius:8,marginBottom:"1rem",lineHeight:1.65}}>
-            <div style={{fontSize:13,fontWeight:500,color:editedCount===stamps.length?"var(--color-text-success)":"var(--color-text-danger)",marginBottom:3}}>
-              {editedCount===stamps.length?"✓ 全"+stamps.length+"枚の手描き加工が完了しました":"⚠ 手描き加工が必須です — 未完了 "+(stamps.length-editedCount)+"枚"}
+          <div style={{padding:"12px 14px",background:editedCount>=1?"var(--color-background-success)":"var(--color-background-danger)",border:"0.5px solid "+(editedCount>=1?"var(--color-border-success)":"var(--color-border-danger)"),borderRadius:8,marginBottom:"1rem",lineHeight:1.65}}>
+            <div style={{fontSize:13,fontWeight:500,color:editedCount>=1?"var(--color-text-success)":"var(--color-text-danger)",marginBottom:3}}>
+              {editedCount>=1?"✓ "+editedCount+"枚手描き加工済み（残り"+(stamps.length-editedCount)+"枚）":"⚠ まず1枚手描き加工してください"}
             </div>
             <div style={{fontSize:12,color:"var(--color-text-secondary)"}}>
-              LINEはAIのみで生成されたスタンプを審査対象外とする場合があります。各スタンプの「✏️ 手描き」から図形を1つ置くだけでOKです。<span style={{fontWeight:500}}>全枚完了するまでZIPダウンロードはできません。</span>
+              LINEはAIのみで生成されたスタンプを審査対象外とする場合があります。各スタンプの「✏️ 手描き」から図形を1つ置くだけでOKです。<span style={{fontWeight:500}}>1枚以上加工するとZIPダウンロードできます。</span>
             </div>
           </div>
 
@@ -1074,12 +1074,24 @@ export default function App() {
                     </div>
                     {/* アニメプレビューボタン */}
                     {animEnabled&&(
-                      <button onClick={async function(){
+                      <button onClick={async function(e){
                         if (!images.length) return;
-                        const imgEl = images[s.imgIdx%images.length].el;
-                        const gifBlob = await generateAnimatedGif(s, imgEl);
-                        const url = URL.createObjectURL(gifBlob);
-                        setAnimPreview({idx:i, gifUrl:url, text:s.text});
+                        const btn = e.currentTarget;
+                        btn.disabled = true;
+                        btn.textContent = "⏳ GIF生成中...";
+                        btn.style.opacity = "0.7";
+                        try {
+                          const imgEl = images[s.imgIdx%images.length].el;
+                          const gifBlob = await generateAnimatedGif(s, imgEl);
+                          const url = URL.createObjectURL(gifBlob);
+                          setAnimPreview({idx:i, gifUrl:url, text:s.text});
+                        } catch(err) {
+                          console.error("GIF生成エラー:", err);
+                          alert("GIF生成に失敗しました。もう一度試してください。");
+                        }
+                        btn.disabled = false;
+                        btn.textContent = "▶ アニメ確認";
+                        btn.style.opacity = "1";
                       }} style={{width:"100%",padding:isMobile?"7px 0":"4px 0",borderRadius:6,border:"1px solid #9C27B0",background:"rgba(156,39,176,0.08)",cursor:"pointer",fontSize:isMobile?12:10,color:"#9C27B0",fontWeight:500,marginBottom:4}}>
                         ▶ アニメ確認
                       </button>
