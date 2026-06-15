@@ -63,6 +63,24 @@ const CHECKLIST_ITEMS = [
 ];
 
 // ---- Canvas helpers ----
+// 角丸吹き出し本体とツノを1本の輪郭線として描く（接合部の二重線を防ぐ）
+function tracePillTailPath(ctx, x, y, w, h, r, cx, tailW, tailH) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(cx - tailW, y);
+  ctx.lineTo(cx, y - tailH);
+  ctx.lineTo(cx + tailW, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
 function drawBubble(ctx, text, bubbleType, colorSet, fontTpl, offsetY) {
   if (offsetY === undefined) offsetY = 0;
   if (bubbleType === "none" || !text) return;
@@ -91,16 +109,11 @@ function drawBubble(ctx, text, bubbleType, colorSet, fontTpl, offsetY) {
     ctx.strokeStyle = colorSet.outline + "55"; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.roundRect(bx+4, by+4, bw-8, bh-8, 10); ctx.stroke();
   } else if (bubbleType === "tail") {
+    const x = bx - 2, y = by - 2, w = bw + 4, h = bh + 4, r = 16, tailW = 16, tailH = 24;
     ctx.fillStyle = "rgba(0,0,0,0.25)";
-    ctx.beginPath(); ctx.roundRect(bx-2+5, by-2+5, bw+4, bh+4, 16); ctx.fill();
-    ctx.fillStyle = colorSet.bubble; ctx.strokeStyle = colorSet.outline; ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.roundRect(bx-2, by-2, bw+4, bh+4, 16); ctx.fill(); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(cx-16, by-2); ctx.lineTo(cx, by-26); ctx.lineTo(cx+16, by-2);
-    ctx.fillStyle = colorSet.bubble; ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(cx-16, by-2); ctx.lineTo(cx, by-26); ctx.lineTo(cx+16, by-2);
-    ctx.strokeStyle = colorSet.outline; ctx.lineWidth = 5; ctx.stroke();
+    tracePillTailPath(ctx, x + 5, y + 5, w, h, r, cx + 5, tailW, tailH); ctx.fill();
+    ctx.fillStyle = colorSet.bubble; ctx.strokeStyle = colorSet.outline; ctx.lineWidth = 5; ctx.lineJoin = "round";
+    tracePillTailPath(ctx, x, y, w, h, r, cx, tailW, tailH); ctx.fill(); ctx.stroke();
   }
   ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = font;
   ctx.lineWidth = 4; ctx.strokeStyle = colorSet.outline + "88"; ctx.strokeText(text, cx, cy);
@@ -108,7 +121,24 @@ function drawBubble(ctx, text, bubbleType, colorSet, fontTpl, offsetY) {
   ctx.restore();
 }
 
-function drawStamp(canvas, imageEl, text, colorSet, fontTpl, bgStyle, bubbleType, offsetY, textColorOverride) {
+// 名前・店名などのラベル表示（吹き出しの下に「— 名前 —」形式で表示）
+function drawNameLabel(ctx, name, colorSet, fontTpl) {
+  if (!name) return;
+  const len = name.length;
+  const fontSize = len <= 4 ? 18 : len <= 8 ? 15 : len <= 12 ? 13 : 11;
+  const font = fontTpl.replace("{sz}", fontSize);
+  const display = "— " + name + " —";
+  ctx.save();
+  ctx.font = font;
+  ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  ctx.lineWidth = 4; ctx.strokeStyle = colorSet.outline;
+  ctx.strokeText(display, STAMP_W / 2, STAMP_H - 10);
+  ctx.fillStyle = colorSet.text;
+  ctx.fillText(display, STAMP_W / 2, STAMP_H - 10);
+  ctx.restore();
+}
+
+function drawStamp(canvas, imageEl, text, colorSet, fontTpl, bgStyle, bubbleType, offsetY, textColorOverride, nameLabel) {
   if (offsetY === undefined) offsetY = 0;
   const ec = textColorOverride ? Object.assign({}, colorSet, { bubbleText: textColorOverride, text: textColorOverride }) : colorSet;
   const ctx = canvas.getContext("2d");
@@ -136,6 +166,7 @@ function drawStamp(canvas, imageEl, text, colorSet, fontTpl, bgStyle, bubbleType
     ctx.lineWidth=7; ctx.strokeStyle=ec.outline; ctx.strokeText(text,STAMP_W/2,STAMP_H-44);
     ctx.fillStyle=ec.text; ctx.fillText(text,STAMP_W/2,STAMP_H-44);
   }
+  if (nameLabel) drawNameLabel(ctx, nameLabel, ec, fontTpl);
 }
 
 // ② キー画像生成
@@ -421,6 +452,8 @@ export default function App() {
   const [bgStyle, setBgStyle] = useState("transparent");
   const [bubbleType, setBubbleType] = useState("tail");
   const [bubbleOffsetY, setBubbleOffsetY] = useState(0);
+  const [nameLabelEnabled, setNameLabelEnabled] = useState(false);
+  const [nameLabel, setNameLabel] = useState("");
   const [count, setCount] = useState(16);
   const [customTexts, setCustomTexts] = useState([]);
   const [step, setStep] = useState("upload");
@@ -446,6 +479,8 @@ export default function App() {
       if (s.bgStyle)      setBgStyle(s.bgStyle);
       if (s.bubbleType)   setBubbleType(s.bubbleType);
       if (s.bubbleOffsetY!=null) setBubbleOffsetY(s.bubbleOffsetY);
+      if (s.nameLabelEnabled!=null) setNameLabelEnabled(s.nameLabelEnabled);
+      if (s.nameLabel!=null) setNameLabel(s.nameLabel);
       if (s.count)        setCount(s.count);
       if (s.stampTitle)   setStampTitle(s.stampTitle);
       if (s.customTexts && s.customTexts.length) setCustomTexts(s.customTexts);
@@ -456,8 +491,8 @@ export default function App() {
 
   // ⑦ localStorage保存
   useEffect(function() {
-    try { localStorage.setItem("lsg_settings", JSON.stringify({ selectedColor, selectedFont, bgStyle, bubbleType, bubbleOffsetY, count, stampTitle, customTexts })); } catch(e) {}
-  }, [selectedColor, selectedFont, bgStyle, bubbleType, bubbleOffsetY, count, stampTitle, customTexts]);
+    try { localStorage.setItem("lsg_settings", JSON.stringify({ selectedColor, selectedFont, bgStyle, bubbleType, bubbleOffsetY, count, stampTitle, customTexts, nameLabelEnabled, nameLabel })); } catch(e) {}
+  }, [selectedColor, selectedFont, bgStyle, bubbleType, bubbleOffsetY, count, stampTitle, customTexts, nameLabelEnabled, nameLabel]);
 
   useEffect(function() {
     try { if (stamps.length) localStorage.setItem("lsg_stamps", JSON.stringify(stamps)); } catch(e) {}
@@ -479,12 +514,17 @@ export default function App() {
   };
 
   const removeBackground = async function(file) {
-    const apiKey = import.meta.env.VITE_REMOVE_BG_API_KEY;
-    if (!apiKey) return null;
     try {
-      const fd = new FormData(); fd.append("image_file",file); fd.append("size","auto");
-      const r = await fetch("https://api.remove.bg/v1.0/removebg",{method:"POST",headers:{"X-Api-Key":apiKey},body:fd});
-      return r.ok ? URL.createObjectURL(await r.blob()) : null;
+      const b64 = await new Promise(function(res){const r=new FileReader();r.onload=function(){res(r.result.split(",")[1]);};r.onerror=function(){res(null);};r.readAsDataURL(file);});
+      if (!b64) return null;
+      const r = await fetch("/api/remove-bg",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:b64,type:file.type||"image/png"})});
+      if (!r.ok) return null;
+      const data = await r.json();
+      if (!data.image) return null;
+      const bin = atob(data.image);
+      const bytes = new Uint8Array(bin.length);
+      for (let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      return URL.createObjectURL(new Blob([bytes],{type:"image/png"}));
     } catch(e) { return null; }
   };
 
@@ -492,16 +532,18 @@ export default function App() {
     const files = Array.from(e.target.files||[]);
     if (!files.length) return;
     const target = Math.min(files.length, 5);
-    const apiKey = import.meta.env.VITE_REMOVE_BG_API_KEY;
-    setRemovingBg(!!apiKey); setRemoveBgProgress(0);
+    setRemovingBg(true); setRemoveBgProgress(0);
     const loaded = [];
     for (let i=0; i<target; i++) {
       const file = files[i];
       let url = URL.createObjectURL(file);
-      if (apiKey) { const ru=await removeBackground(file); if(ru)url=ru; setRemoveBgProgress(Math.round(((i+1)/target)*100)); }
+      let bgRemoved = false;
+      const ru = await removeBackground(file);
+      if (ru) { url = ru; bgRemoved = true; }
+      setRemoveBgProgress(Math.round(((i+1)/target)*100));
       const img = new Image();
       await new Promise(function(res){img.onload=res;img.onerror=res;img.src=url;});
-      loaded.push({url,el:img,name:file.name,bgRemoved:!!apiKey});
+      loaded.push({url,el:img,name:file.name,bgRemoved});
     }
     setRemovingBg(false); setRemoveBgProgress(0);
     setImages(function(prev){ return [...prev,...loaded].slice(0,5); });
@@ -518,7 +560,7 @@ export default function App() {
         const b64 = await new Promise(function(res){const r=new FileReader();r.onload=function(){res(r.result.split(",")[1]);};r.readAsDataURL(blob);});
         return {type:"image",source:{type:"base64",media_type:blob.type||"image/jpeg",data:b64}};
       }));
-      const r = await fetch("https://api.anthropic.com/v1/messages",{
+      const r = await fetch("/api/claude-proxy",{
         method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:[
           ...imageContents,
@@ -538,7 +580,7 @@ export default function App() {
   const generateAiDesc = async function() {
     setGeneratingDesc(true);
     try {
-      const r = await fetch("https://api.anthropic.com/v1/messages",{
+      const r = await fetch("/api/claude-proxy",{
         method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,messages:[{role:"user",content:"LINEスタンプのCreators Market申請用のタイトルと説明文を生成してください。\nスタンプ名: "+(stampTitle||"未設定")+"\n被写体: "+(analysis&&analysis.subject||"キャラクター")+"\n雰囲気: "+(analysis&&analysis.mood||"かわいい")+"\nテキスト例: "+customTexts.slice(0,5).join("、")+"\nJSON形式のみで返してください（マークダウン不要）:\n{\"titleJa\":\"日本語タイトル(30文字以内)\",\"titleEn\":\"English title\",\"descJa\":\"日本語説明文(3文以内)\",\"descEn\":\"English description\"}"}]})
       });
@@ -553,14 +595,15 @@ export default function App() {
     const texts = (customTexts.length>0?customTexts:STAMP_TEXTS).slice(0,count);
     const colorSet = COLOR_SETS[selectedColor];
     const fontTpl = FONT_OPTIONS[selectedFont].value;
+    const label = nameLabelEnabled ? nameLabel.trim() : "";
     const newStamps = texts.map(function(text,i){
       const imgEl = images[i%images.length].el;
       const c = document.createElement("canvas");
-      drawStamp(c,imgEl,text,colorSet,fontTpl,bgStyle,bubbleType,bubbleOffsetY,null);
+      drawStamp(c,imgEl,text,colorSet,fontTpl,bgStyle,bubbleType,bubbleOffsetY,null,label);
       return {text,dataUrl:c.toDataURL("image/png"),imgIdx:i%images.length,edited:false,textColor:null};
     });
     setStamps(newStamps); setStep("preview");
-  }, [images,customTexts,count,selectedColor,selectedFont,bgStyle,bubbleType,bubbleOffsetY]);
+  }, [images,customTexts,count,selectedColor,selectedFont,bgStyle,bubbleType,bubbleOffsetY,nameLabelEnabled,nameLabel]);
 
   const handleSaveEdit = function(idx, dataUrl) {
     setStamps(function(prev){ return prev.map(function(s,i){ return i===idx?Object.assign({},s,{dataUrl,edited:true}):s; }); });
@@ -575,7 +618,7 @@ export default function App() {
     const colorSet = COLOR_SETS[selectedColor];
     const fontTpl = FONT_OPTIONS[selectedFont].value;
     const c = document.createElement("canvas");
-    drawStamp(c,imgEl,stamp.text,colorSet,fontTpl,bgStyle,bubbleType,bubbleOffsetY,color||null);
+    drawStamp(c,imgEl,stamp.text,colorSet,fontTpl,bgStyle,bubbleType,bubbleOffsetY,color||null,nameLabelEnabled?nameLabel.trim():"");
     setStamps(function(prev){ return prev.map(function(s,i){ return i===idx?Object.assign({},s,{dataUrl:c.toDataURL("image/png"),textColor:color||null}):s; }); });
   };
 
@@ -830,6 +873,25 @@ export default function App() {
               </div>
             </div>
           )}
+
+          {/* 名前・店名ラベル */}
+          <div style={{marginBottom:"1rem",padding:"12px 14px",background:"var(--color-background-secondary)",borderRadius:10,border:"0.5px solid var(--color-border-tertiary)"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:nameLabelEnabled?8:0,gap:8}}>
+              <div>
+                <div style={{fontSize:13,fontWeight:600,color:"var(--color-text-primary)"}}>名前・お店の名前を入れる</div>
+                <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:2}}>ペットの名前、ニックネーム、店名・キャラクター名などを全スタンプ共通で表示できます</div>
+              </div>
+              <button onClick={function(){setNameLabelEnabled(function(v){return !v;});}} style={{padding:"6px 14px",borderRadius:20,border:"none",background:nameLabelEnabled?"#06C755":"rgba(6,199,85,0.12)",color:nameLabelEnabled?"#fff":"#06C755",cursor:"pointer",fontSize:12,fontWeight:700,flexShrink:0}}>
+                {nameLabelEnabled?"ON ✓":"OFF"}
+              </button>
+            </div>
+            {nameLabelEnabled&&(
+              <div>
+                <input type="text" value={nameLabel} onChange={function(e){setNameLabel(e.target.value);}} placeholder="例: ポチ / ももちゃん / 〇〇サロン" maxLength={16} style={{width:"100%",boxSizing:"border-box",padding:"8px 10px",borderRadius:8,border:"0.5px solid var(--color-border-secondary)",fontSize:14,background:"var(--color-background-primary)",color:"var(--color-text-primary)"}} />
+                <div style={{fontSize:11,color:"var(--color-text-tertiary)",marginTop:4}}>「— {nameLabel||"名前"} —」の形式で吹き出しの下に表示されます（長い場合は自動で縮小）</div>
+              </div>
+            )}
+          </div>
 
           <div style={{marginBottom:"1rem"}}>
             <button style={{padding:isMobile?"12px 20px":"10px 22px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#06C755,#00A040)",color:"#fff",cursor:"pointer",fontSize:isMobile?15:14,fontWeight:600,boxShadow:"0 2px 8px rgba(6,199,85,0.3)"}} onClick={analyzeImages} disabled={analyzing}>
