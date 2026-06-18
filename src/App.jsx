@@ -382,14 +382,15 @@ function ChecklistModal({ onConfirm, onClose, stampCount }) {
   const [checks, setChecks] = useState({});
   const toggle = function(id) { setChecks(function(p){ return Object.assign({},p,{[id]:!p[id]}); }); };
   const mustItems = CHECKLIST_ITEMS.filter(function(i){return i.must;});
-  const allMustChecked = mustItems.every(function(i){return checks[i.id];});
+  const checkedCount = mustItems.filter(function(i){return checks[i.id];}).length;
+  const allMustChecked = checkedCount === mustItems.length;
 
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999,padding:"1rem"}}>
-      <div style={{background:"var(--color-background-primary)",borderRadius:16,padding:"1.5rem",width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto"}}>
-        <div style={{fontSize:16,fontWeight:500,marginBottom:4,color:"var(--color-text-primary)"}}>申請前チェックリスト</div>
-        <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:"1rem"}}>{stampCount}枚のスタンプをZIPダウンロードする前に確認してください。</div>
-        <div style={{fontSize:11,fontWeight:500,color:"var(--color-text-danger)",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.05em"}}>必須確認</div>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:999,padding:"1rem"}}>
+      <div style={{background:"var(--color-background-primary)",borderRadius:16,padding:"1.5rem",width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 8px 40px rgba(0,0,0,0.5)"}}>
+        <div style={{fontSize:17,fontWeight:700,marginBottom:4,color:"var(--color-text-primary)"}}>📋 申請前チェックリスト</div>
+        <div style={{fontSize:13,color:"var(--color-text-secondary)",marginBottom:"1rem"}}>{stampCount}枚のスタンプをZIPダウンロードする前に確認してください。タップでチェックできます。</div>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--color-text-danger)",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.05em"}}>✅ 必須確認（タップしてチェック）</div>
         {CHECKLIST_ITEMS.filter(function(i){return i.must;}).map(function(item) {
           const checked = !!checks[item.id];
           return (
@@ -413,11 +414,12 @@ function ChecklistModal({ onConfirm, onClose, stampCount }) {
             </div>
           );
         })}
-        {!allMustChecked&&<div style={{padding:"10px 12px",background:"var(--color-background-warning)",border:"0.5px solid var(--color-border-warning)",borderRadius:8,fontSize:13,color:"var(--color-text-warning)",marginTop:12}}>必須項目がすべてチェックされていません。</div>}
+        {!allMustChecked&&<div style={{padding:"10px 14px",background:"#e8f4fd",border:"1.5px solid #90caf9",borderRadius:8,fontSize:13,color:"#1565c0",marginTop:12,textAlign:"center"}}>💡 {checkedCount}/{mustItems.length}項目確認済み — 未確認のままでもダウンロードできます</div>}
+        {allMustChecked&&<div style={{padding:"10px 14px",background:"#e8f5e9",border:"1.5px solid #66bb6a",borderRadius:8,fontSize:13,fontWeight:600,color:"#2e7d32",marginTop:12,textAlign:"center"}}>✅ すべての必須項目を確認しました！</div>}
         <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:"1rem"}}>
           <button style={{padding:"10px 20px",borderRadius:8,border:"0.5px solid var(--color-border-secondary)",background:"transparent",cursor:"pointer",fontSize:13,color:"var(--color-text-primary)"}} onClick={onClose}>戻る</button>
-          <button style={{padding:"10px 24px",borderRadius:8,border:"none",background:allMustChecked?"var(--color-text-primary)":"var(--color-border-tertiary)",color:"var(--color-background-primary)",cursor:allMustChecked?"pointer":"not-allowed",fontSize:14,fontWeight:500}} onClick={function(){allMustChecked&&onConfirm();}} disabled={!allMustChecked}>
-            {allMustChecked?"チェック完了 — ZIPダウンロード":"あと"+mustItems.filter(function(i){return !checks[i.id];}).length+"項目必須"}
+          <button style={{padding:"10px 24px",borderRadius:8,border:"none",background:"#06C755",color:"#fff",cursor:"pointer",fontSize:14,fontWeight:700,boxShadow:"0 2px 8px rgba(6,199,85,0.4)"}} onClick={onConfirm}>
+            📦 ZIPダウンロード
           </button>
         </div>
       </div>
@@ -981,7 +983,7 @@ export default function App() {
               const sizeKB = getStampSizeKB(s.dataUrl);
               return (
                 <div key={i} style={{borderRadius:8,overflow:"hidden",border:s.edited?"2px solid var(--color-border-success)":"0.5px solid var(--color-border-tertiary)"}}>
-                  <div style={{position:"relative"}}>
+                  <div style={{position:"relative",background:"repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/12px 12px",minHeight:80}}>
                     <img src={s.dataUrl} style={{width:"100%",display:"block"}} />
                     {/* ① サイズバッジ */}
                     <div style={{position:"absolute",top:4,right:4,padding:"2px 5px",borderRadius:4,fontSize:9,fontWeight:600,background:sizeKB<=900?"rgba(6,199,85,0.85)":"rgba(220,53,69,0.9)",color:"#fff"}}>
